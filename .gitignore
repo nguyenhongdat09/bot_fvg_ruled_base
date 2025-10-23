@@ -1,0 +1,17 @@
+# --- Python venv and cache ---
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- IDE and OS junk files ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Logs and temp ---
+*.log
+*.tmp
+logs/
