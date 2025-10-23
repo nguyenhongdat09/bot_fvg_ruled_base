@@ -246,7 +246,7 @@ def generate_fvg_id(fvg_type: str, timestamp: pd.Timestamp, index: int) -> str:
         str: Unique ID
     """
     timestamp_str = timestamp.strftime('%Y%m%d_%H%M%S')
-    return f"{fvg_type}_{timestamp_str}_{index}"cd bot_fvg_ruled_base
+    return f"{fvg_type}_{timestamp_str}_{index}"
 
 
 def calculate_fvg_strength(gap_size: float, atr: float) -> float:
