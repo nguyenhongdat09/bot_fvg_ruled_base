@@ -8,6 +8,14 @@ Author: Claude Code
 Date: 2025-10-24
 """
 
+import sys
+import os
+
+# Add parent directory to path to import core modules
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 import pandas as pd
 import pandas_ta as ta
 from core.fvg.fvg_manager import FVGManager
