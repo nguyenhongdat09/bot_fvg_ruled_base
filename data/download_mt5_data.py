@@ -51,17 +51,17 @@ class MT5DataDownloader:
 
         # Initialize MT5 with path
         if self.mt5_path:
-            print(f"\n=Á Using MT5 path: {self.mt5_path}")
+            print(f"\n= Using MT5 path: {self.mt5_path}")
             if not mt5.initialize(path=self.mt5_path):
                 print(f"L Failed to initialize MT5 with path: {self.mt5_path}")
                 print(f"   Error: {mt5.last_error()}")
                 return False
         else:
-            print("\n=Á Using default MT5 installation")
+            print("\n= Using default MT5 installation")
             if not mt5.initialize():
                 print(f"L Failed to initialize MT5")
                 print(f"   Error: {mt5.last_error()}")
-                print("\n=¡ Troubleshooting:")
+                print("\n= Troubleshooting:")
                 print("   1. Make sure MetaTrader 5 is installed")
                 print("   2. Check MT5 path in config.py")
                 print("   3. Try opening MT5 manually first")
@@ -72,7 +72,7 @@ class MT5DataDownloader:
 
         # Print MT5 info
         version = mt5.version()
-        print(f"\n=Ê MT5 Info:")
+        print(f"\n= MT5 Info:")
         print(f"   Version: {version[0]}.{version[1]}")
         print(f"   Build: {version[2]}")
 
@@ -85,7 +85,7 @@ class MT5DataDownloader:
             print(f"   Company: {account_info.company}")
             print(f"   Balance: ${account_info.balance:.2f}")
         else:
-            print("\n   No account logged in")
+            print("\n  No account logged in")
             print("   You can still download data from some brokers")
 
         return True
@@ -138,7 +138,7 @@ class MT5DataDownloader:
             print(f"L Symbol {symbol} not found")
 
             # Show available symbols
-            print("\n=¡ Available symbols:")
+            print("\n= Available symbols:")
             available = mt5.symbols_get()
             if available:
                 # Group by first 3 letters
@@ -216,7 +216,7 @@ class MT5DataDownloader:
             print(f"L No data received")
             print(f"   Error code: {error[0]}")
             print(f"   Error message: {error[1]}")
-            print("\n=¡ Possible reasons:")
+            print("\n= Possible reasons:")
             print("   - Symbol not available for this timeframe")
             print("   - Date range too old (no historical data)")
             print("   - MT5 not logged in")
@@ -241,7 +241,7 @@ class MT5DataDownloader:
         data = data[['open', 'high', 'low', 'close', 'volume']]
 
         print(f" Data converted")
-        print(f"\n=Ê Data Summary:")
+        print(f"\n= Data Summary:")
         print(f"   Rows: {len(data)}")
         print(f"   Columns: {list(data.columns)}")
         print(f"   Date range: {data.index[0]} to {data.index[-1]}")
@@ -279,7 +279,7 @@ def main():
     print("="*70)
 
     # Show current config
-    print("\n=Ë Current Configuration:")
+    print("\n= Current Configuration:")
     print(f"   MT5 Path: {MT5_CONFIG['path'] or 'Default'}")
     print(f"   Symbol: {DATA_CONFIG['symbol']}")
     print(f"   Timeframe: {DATA_CONFIG['timeframe']}")
@@ -291,7 +291,7 @@ def main():
     # Connect to MT5
     if not downloader.connect():
         print("\nL Connection failed!")
-        print("\n=¡ To fix:")
+        print("\n= To fix:")
         print("   1. Edit config.py")
         print("   2. Set MT5_CONFIG['path'] to your MT5 terminal path")
         print("      Example: r'C:\\Program Files\\MetaTrader 5\\terminal64.exe'")
@@ -315,8 +315,8 @@ def main():
         print("="*70)
 
         filepath = get_data_filepath()
-        print(f"\n=Á Data saved to: {filepath}")
-        print(f"\n=Ý Next steps:")
+        print(f"\n= Data saved to: {filepath}")
+        print(f"\n= Next steps:")
         print(f"   1. Check file: {filepath}")
         print(f"   2. Test with real data: python test_fvg_real_data.py")
         print(f"   3. Or use in your own script:")

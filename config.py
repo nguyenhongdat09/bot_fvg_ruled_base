@@ -25,9 +25,9 @@ CHARTS_DIR.mkdir(exist_ok=True)
 # METATRADER 5 CONFIGURATION
 # ============================================
 MT5_CONFIG = {
-    # MT5 executable path - THAY ÔI Â CHÌN MT5 NÀO Sì DäNG
+    # MT5 executable path - THAY ï¿½I ï¿½ CHï¿½N MT5 Nï¿½O Sï¿½ Dï¿½NG
     # Windows default paths:
-    # 'path': r'C:\Program Files\MetaTrader 5\terminal64.exe',
+    'path': r'C:\Users\nguye\AppData\Roaming\MetaTrader 5 IC Markets (SC)\terminal64.exe',
     # 'path': r'C:\Program Files\MetaTrader 5 - IC Markets\terminal64.exe',
     # 'path': r'C:\Program Files\MetaTrader 5 - XM\terminal64.exe',
 
@@ -37,7 +37,7 @@ MT5_CONFIG = {
     # Set to None to use default MT5 installation
     'path': None,
 
-    # MT5 login credentials (optional - n¿u muÑn auto login)
+    # MT5 login credentials (optional - nï¿½u muï¿½n auto login)
     'login': None,      # Account number
     'password': None,   # Password
     'server': None,     # Server name (e.g., 'ICMarkets-Demo')
@@ -52,11 +52,11 @@ MT5_CONFIG = {
 # ============================================
 DATA_CONFIG = {
     # Default symbol and timeframe
-    'symbol': 'EURUSD',
+    'symbol': 'GBPUSD',
     'timeframe': 'M15',  # M1, M5, M15, M30, H1, H4, D1
 
     # Data range
-    'days': 30,          # Download last N days
+    'days': 180,          # Download last N days
     'start_date': None,  # Or specify start date: '2024-01-01'
     'end_date': None,    # Or specify end date: '2024-12-31'
 
@@ -72,7 +72,7 @@ DATA_CONFIG = {
 FVG_CONFIG = {
     # FVG Detection
     'lookback_days': 90,           # FVG valid for 90 days
-    'min_gap_atr_ratio': 0.3,      # Gap must be >= ATR × 0.3
+    'min_gap_atr_ratio': 0.3,      # Gap must be >= ATR ï¿½ 0.3
     'min_gap_pips': None,          # Optional: Gap must be >= X pips
 
     # Visualization
@@ -149,7 +149,7 @@ BACKTEST_CONFIG = {
 
     # Martingale settings
     'base_lot': 0.01,
-    'martingale_factor': 1.3,      # Lot × 1.3 after each loss
+    'martingale_factor': 1.3,      # Lot ï¿½ 1.3 after each loss
     'max_martingale_steps': 5,     # Max 5 consecutive real trades
 
     # Starting capital
@@ -241,7 +241,7 @@ def print_config():
     print("CURRENT CONFIGURATION")
     print("="*60)
 
-    print("\n=Á Paths:")
+    print("\n=ï¿½ Paths:")
     print(f"  Project Root: {PROJECT_ROOT}")
     print(f"  Data Dir: {DATA_DIR}")
     print(f"  Logs Dir: {LOGS_DIR}")
@@ -250,21 +250,21 @@ def print_config():
     print(f"  Path: {MT5_CONFIG['path'] or 'Default'}")
     print(f"  Server: {MT5_CONFIG['server'] or 'Not set'}")
 
-    print("\n=Ê Data:")
+    print("\n=ï¿½ Data:")
     print(f"  Symbol: {DATA_CONFIG['symbol']}")
     print(f"  Timeframe: {DATA_CONFIG['timeframe']}")
     print(f"  Days: {DATA_CONFIG['days']}")
 
-    print("\n=Ð FVG:")
+    print("\n=ï¿½ FVG:")
     print(f"  Lookback: {FVG_CONFIG['lookback_days']} days")
     print(f"  Min Gap ATR Ratio: {FVG_CONFIG['min_gap_atr_ratio']}")
 
-    print("\n=È Strategy:")
+    print("\n=ï¿½ Strategy:")
     print(f"  Min Confluence: {STRATEGY_CONFIG['min_confluence_score']}")
     print(f"  SL: {STRATEGY_CONFIG['sl_pips']} pips")
     print(f"  TP: {STRATEGY_CONFIG['tp_pips']} pips")
 
-    print("\n<² Backtest:")
+    print("\n<ï¿½ Backtest:")
     print(f"  Loss Streak Trigger: {BACKTEST_CONFIG['loss_streak_trigger']}")
     print(f"  Base Lot: {BACKTEST_CONFIG['base_lot']}")
     print(f"  Martingale Factor: {BACKTEST_CONFIG['martingale_factor']}")

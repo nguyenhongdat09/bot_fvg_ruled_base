@@ -110,7 +110,7 @@ Mở `config.py` và chỉnh:
 DATA_CONFIG = {
     'symbol': 'EURUSD',     # Cặp tiền muốn download
     'timeframe': 'M15',     # Khung thời gian
-    'days': 30,             # Số ngày
+    'days': 180,             # Số ngày
 }
 ```
 
