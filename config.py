@@ -186,6 +186,64 @@ LOGGING_CONFIG = {
 
 
 # ============================================
+# MULTI-TIMEFRAME STRATEGY CONFIGURATION
+# ============================================
+MULTI_TIMEFRAME_STRATEGY_CONFIG = {
+    # Base timeframe (smallest timeframe for execution)
+    'base_timeframe': 'M15',       # Trading execution timeframe
+
+    # FVG Analysis Timeframes
+    'fvg_timeframes': {
+        'primary': 'H1',           # Primary FVG timeframe
+        'secondary': 'H4',         # Secondary FVG timeframe (optional)
+        'tertiary': None,          # Tertiary FVG timeframe (optional, e.g., 'D1')
+    },
+
+    # Indicators Timeframes
+    'indicator_timeframes': {
+        # Trend indicators
+        'ema_fast': 'M15',         # Fast EMA timeframe
+        'ema_slow': 'H1',          # Slow EMA timeframe
+        'macd': 'M15',             # MACD timeframe
+
+        # Momentum indicators
+        'rsi': 'M15',              # RSI timeframe
+        'stochastic': 'M15',       # Stochastic timeframe
+
+        # Volatility indicators
+        'atr': 'M15',              # ATR timeframe (for base execution)
+        'bollinger': 'H1',         # Bollinger Bands timeframe
+
+        # Volume indicators
+        'volume_sma': 'M15',       # Volume SMA timeframe
+        'obv': 'H1',               # OBV timeframe
+        'cmf': 'M15',              # CMF timeframe
+    },
+
+    # Strategy Rules
+    'require_all_fvg_alignment': False,  # True = All FVG timeframes must align
+    'min_timeframe_confluence': 2,        # Min timeframes that must agree
+
+    # Example Strategies (can enable/disable)
+    'strategies': {
+        'triple_timeframe': {
+            'enabled': True,
+            'description': 'H4 trend + H1 FVG + M15 entry',
+            'fvg_tf': 'H1',
+            'trend_tf': 'H4',
+            'entry_tf': 'M15',
+        },
+        'dual_confirmation': {
+            'enabled': False,
+            'description': 'H1 FVG + M15 RSI',
+            'fvg_tf': 'H1',
+            'entry_tf': 'M15',
+        },
+    }
+}
+
+
+# ============================================
 # TESTING CONFIGURATION
 # ============================================
 TESTING_CONFIG = {
