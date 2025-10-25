@@ -249,8 +249,8 @@ MULTI_TIMEFRAME_STRATEGY_CONFIG = {
 TESTING_CONFIG = {
     # Test data generation
     'test_data_candles': 500,
-    'test_data_symbol': 'EURUSD',
-    'test_data_timeframe': 'M15',
+    'test_data_symbol': 'GBPUSD',
+    'test_data_timeframe': 'H1',
     'test_random_seed': 42,        # For reproducible results
 
     # Visualization
