@@ -198,15 +198,71 @@ STRATEGY_CONFIG = {
 
 
 # ============================================
-# BACKTEST CONFIGURATION
+# BACKTEST CONFIGURATION - DYNAMIC RISK RECOVERY SYSTEM
 # ============================================
 BACKTEST_CONFIG = {
+    # ===== SYMBOL & TIMEFRAME =====
+    'symbol': 'GBPUSD',
+    'timeframe': 'H1',             # Base timeframe
+    'fvg_timeframe': 'H1',         # FVG analysis timeframe
+    'days': 180,                   # Number of days of data
+
+    # ===== ACCOUNT SETTINGS =====
+    'initial_balance': 1000.0,     # Starting balance
+    'risk_per_trade': 0.02,        # Risk per trade (2%)
+    'base_lot_size': 0.1,          # Base lot size in VIRTUAL mode
+
+    # ===== COMMISSION & COSTS =====
+    'commission_per_lot': 7.0,     # Commission per lot (round trip)
+    'pip_value': 0.0001,           # For 5-digit broker (0.01 for 4-digit)
+
+    # ===== DYNAMIC RISK RECOVERY (Replaces Martingale!) =====
+    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N virtual losses
+    'recovery_multiplier': 2.0,       # Recovery target = Total Loss × 2.0 (recover + profit)
+    'min_lot_size': 0.01,             # Minimum lot size (broker limit)
+    'max_lot_size': 10.0,             # Maximum lot size (risk limit)
+
+    # ===== STOP LOSS / TAKE PROFIT MODE SELECTION =====
+    # Choose: True = ATR-based (dynamic), False = Fixed pips
+    'use_atr_sl_tp': False,        # ← Change to True for ATR mode
+
+    # ATR Mode Settings (used when use_atr_sl_tp = True)
+    'atr_sl_multiplier': 1.5,      # SL = ATR × 1.5
+    'atr_tp_multiplier': 3.0,      # TP = ATR × 3.0
+
+    # Pips Mode Settings (used when use_atr_sl_tp = False)
+    'sl_pips': 50,                 # SL = 50 pips (fixed)
+    'tp_pips': 100,                # TP = 100 pips (fixed)
+
+    # ===== CONFLUENCE SCORING =====
+    'min_confidence_score': 70.0,  # Minimum score to trade (70%)
+    'enable_adx_filter': True,     # Enable ADX filter
+    'adx_threshold': 35.0,         # ADX >= 35 for strong trends
+
+    # ===== CONFLUENCE WEIGHTS (Total = 100) =====
+    'confluence_weights': {
+        'fvg': 50,      # FVG weight (primary signal)
+        'vwap': 20,     # VWAP weight
+        'obv': 15,      # OBV weight
+        'volume': 15,   # Volume spike weight
+    },
+
+    # ===== BACKTEST LIMITS =====
+    'max_trades_per_day': 50,      # Max trades per day
+    'max_concurrent_trades': 1,    # Only 1 trade at a time
+}
+
+
+# ============================================
+# LEGACY BACKTEST CONFIG (OLD - For reference only)
+# ============================================
+BACKTEST_CONFIG_LEGACY = {
     # Virtual/Real mode switching
     'loss_streak_trigger': 3,      # Switch to REAL after N losses
 
     # Martingale settings
     'base_lot': 0.01,
-    'martingale_factor': 1.3,      # Lot � 1.3 after each loss
+    'martingale_factor': 1.3,      # Lot × 1.3 after each loss
     'max_martingale_steps': 5,     # Max 5 consecutive real trades
 
     # Starting capital
