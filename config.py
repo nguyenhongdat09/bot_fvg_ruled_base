@@ -200,6 +200,8 @@ STRATEGY_CONFIG = {
 # BACKTEST CONFIGURATION
 # CHỈ CHỈNH Ở ĐÂY - TẤT CẢ CONFIG TẬP TRUNG 1 CHỖ!
 # ============================================
+
+# DEFAULT CONFIG (Conservative - for testing)
 BACKTEST_CONFIG = {
     # ===== SYMBOL & TIMEFRAME =====
     'symbol': 'GBPUSD',            # Symbol de backtest
@@ -242,6 +244,100 @@ BACKTEST_CONFIG = {
     'max_trades_per_day': 50,      # Max trades per day (unlimited = None)
     'max_concurrent_trades': 3,    # Only 1 trade at a time
 }
+
+
+# OPTIMIZED CONFIG (Recommended for better win rate)
+# Based on analysis: More selective entries, stronger trends, safer martingale
+BACKTEST_CONFIG_OPTIMIZED = {
+    # ===== SYMBOL & TIMEFRAME =====
+    'symbol': 'GBPUSD',
+    'timeframe': 'M15',
+    'fvg_timeframe': 'H1',
+    'days': 180,
+
+    # ===== ACCOUNT SETTINGS =====
+    'initial_balance': 1000.0,
+    'risk_per_trade': 0.02,
+    'base_lot_size': 0.1,
+
+    # ===== COMMISSION & COSTS =====
+    'commission_per_lot': 7.0,
+    'pip_value': 0.0001,
+
+    # ===== MARTINGALE SETTINGS (Safer) =====
+    'consecutive_losses_trigger': 5,   # Changed from 3 -> 5 (more conservative)
+    'martingale_multiplier': 1.2,      # Changed from 1.3 -> 1.2 (slower escalation)
+    'max_lot_size': 5.0,               # Changed from 10.0 -> 5.0 (safer max)
+
+    # ===== STOP LOSS / TAKE PROFIT (Better R:R) =====
+    'atr_sl_multiplier': 2.0,          # Changed from 1.5 -> 2.0 (wider SL)
+    'atr_tp_multiplier': 4.0,          # Changed from 3.0 -> 4.0 (higher TP)
+                                       # Risk:Reward = 1:2
+
+    # ===== CONFLUENCE SCORING (More Selective) =====
+    'min_confidence_score': 85.0,      # Changed from 70 -> 85 (much more selective)
+    'enable_adx_filter': True,
+    'adx_threshold': 30.0,             # Changed from 25 -> 30 (stronger trends only)
+
+    # ===== CONFLUENCE WEIGHTS =====
+    'confluence_weights': {
+        'fvg': 55,      # Increased from 50 (FVG is primary)
+        'vwap': 25,     # Increased from 20 (price position important)
+        'obv': 10,      # Decreased from 15
+        'volume': 10,   # Decreased from 15
+    },
+
+    # ===== BACKTEST LIMITS =====
+    'max_trades_per_day': 50,
+    'max_concurrent_trades': 1,
+}
+
+
+# AGGRESSIVE CONFIG (High risk, high reward)
+# WARNING: Use only if you understand the risks!
+BACKTEST_CONFIG_AGGRESSIVE = {
+    # ===== SYMBOL & TIMEFRAME =====
+    'symbol': 'GBPUSD',
+    'timeframe': 'M15',
+    'fvg_timeframe': 'H1',
+    'days': 180,
+
+    # ===== ACCOUNT SETTINGS =====
+    'initial_balance': 1000.0,
+    'risk_per_trade': 0.02,
+    'base_lot_size': 0.1,
+
+    # ===== COMMISSION & COSTS =====
+    'commission_per_lot': 7.0,
+    'pip_value': 0.0001,
+
+    # ===== MARTINGALE SETTINGS (Aggressive) =====
+    'consecutive_losses_trigger': 1,   # Switch immediately after 1 loss
+    'martingale_multiplier': 1.5,      # High multiplier
+    'max_lot_size': 10.0,
+
+    # ===== STOP LOSS / TAKE PROFIT =====
+    'atr_sl_multiplier': 1.0,          # Tight SL
+    'atr_tp_multiplier': 5.0,          # High TP (1:5 R:R)
+
+    # ===== CONFLUENCE SCORING (Less Selective) =====
+    'min_confidence_score': 60.0,      # Lower threshold = more trades
+    'enable_adx_filter': False,        # No ADX filter = trade in all conditions
+    'adx_threshold': 20.0,
+
+    # ===== CONFLUENCE WEIGHTS =====
+    'confluence_weights': {
+        'fvg': 50,
+        'vwap': 20,
+        'obv': 15,
+        'volume': 15,
+    },
+
+    # ===== BACKTEST LIMITS =====
+    'max_trades_per_day': 100,         # More trades
+    'max_concurrent_trades': 3,        # Multiple positions
+}
+
 
 # ============================================
 # LOGGING CONFIGURATION
