@@ -98,7 +98,8 @@ BATCH_DOWNLOAD_CONFIG = {
     ],
 
     # Timeframes to download for EACH symbol
-    'timeframes': [ 
+    'timeframes': [
+        'M5',
         'M15', 
         'H1',
         'H4',
@@ -109,7 +110,7 @@ BATCH_DOWNLOAD_CONFIG = {
     ],
 
     # Data range
-    'days': 730,              # Download last 365 days
+    'days': 180,              # Download last 180 days
 
     # Download settings
     'skip_existing': True,    # Skip if file already exists
@@ -186,158 +187,37 @@ STRATEGY_CONFIG = {
     'high_confidence_risk': 2.0,   # Risk 2% (high confidence)
 
     # Stop Loss / Take Profit (in pips)
-    'sl_pips': 20,
-    'tp_pips': 40,
+    'sl_pips': 50,
+    'tp_pips': 100,
 
     # Or use ATR-based SL/TP
     'use_atr_sl_tp': False,
     'sl_atr_multiplier': 1.5,
-    'tp_atr_multiplier': 2.0,
+    'tp_atr_multiplier': 3.0,
 }
+
 
 # ============================================
 # BACKTEST CONFIGURATION
-# CHỈ CHỈNH Ở ĐÂY - TẤT CẢ CONFIG TẬP TRUNG 1 CHỖ!
 # ============================================
-#Lotsize làm tròn lên 2 chữ số thập phân, ví dụ: 0.013 -> 0.01 hoặc 0.017 -> 0.02
-#Bây giờ không dùng martingale nữa mà dùng dynamic risk ví dụ thua 3 lệnh ảo là -5$ thì lệnh thứ thật thứ 5 lot size phải làm sao canh chỉnh nhân với pip TP fixed hoặc ATR phải >= 10$ và lỡ thua thì lệnh thứ 6 lot size phải canh chỉnh TP có lãi và gỡ hết khoảng lỗ đã dính mấy lệnh trước v.v... để đảm bảo lợi nhuận luôn dương khi thắng lệnh cuối cùng 
-#Chỉnh sửa TP SL theo pips hoặc theo ATR tùy chọn ngay trong BACKTEST_CONFIG hiện tại chỉ set được SL TP Theo ATR
-#Khi run backtest xong có thể xuất file csv có thể nhiều cột như time frame , fvg_timeframe ,base_lot_size ... các chi tiết càng tốt để tiện phân tích cho AI đọc và tối ưu
-# DEFAULT CONFIG (Conservative - for testing)
 BACKTEST_CONFIG = {
-    # ===== SYMBOL & TIMEFRAME =====
-    'symbol': 'GBPUSD',            # Symbol de backtest
-    'timeframe': 'M15',            # Base timeframe (indicators)
-    'fvg_timeframe': 'H1',         # FVG analysis timeframe (cao hon base)
-    'days': 365,                   # So ngay data
+    # Virtual/Real mode switching
+    'loss_streak_trigger': 3,      # Switch to REAL after N losses
 
-    # ===== ACCOUNT SETTINGS =====
-    'initial_balance': 200.0,     # Starting balance ($1000 minimum recommended)
-    'risk_per_trade': 0.02,        # Risk per trade (2% = 0.02)
-    'base_lot_size': 0.01,          # Base lot size in virtual mode
+    # Martingale settings
+    'base_lot': 0.01,
+    'martingale_factor': 1.3,      # Lot � 1.3 after each loss
+    'max_martingale_steps': 5,     # Max 5 consecutive real trades
 
-    # ===== COMMISSION & COSTS =====
-    'commission_per_lot': 0.0,     # Commission per lot (round trip) - DIEU CHINH THEO BROKER!
-    'pip_value': 0.0001,           # For 5-digit broker (4-digit = 0.01)
+    # Starting capital
+    'initial_balance': 10000,      # USD
 
-    # ===== MARTINGALE SETTINGS =====
-    'consecutive_losses_trigger': 4,  # Switch to REAL mode after N losses
-    'martingale_multiplier': 1.3,     # Lot x 1.3 after each loss
-    'max_lot_size': 10.0,             # Maximum lot size limit
-
-    # ===== STOP LOSS / TAKE PROFIT =====
-    'atr_sl_multiplier': 1.5,      # SL = ATR x 1.5
-    'atr_tp_multiplier': 3.0,      # TP = ATR x 3.0
-
-    # ===== CONFLUENCE SCORING =====
-    'min_confidence_score': 70.0,  # Minimum score to trade (80%)
-    'enable_adx_filter': True,     # Enable ADX filter for trending markets
-    'adx_threshold': 35.0,         # ADX >= 35 for trending
-
-    # ===== CONFLUENCE WEIGHTS (Tong = 100) =====
-    'confluence_weights': {
-        'fvg': 70,      # FVG weight (primary signal)
-        'vwap': 10,     # VWAP weight
-        'obv': 10,      # OBV weight
-        'volume': 10,   # Volume spike weight
-    },
-
-    # ===== BACKTEST LIMITS =====
-    'max_trades_per_day': 50,      # Max trades per day (unlimited = None)
-    'max_concurrent_trades': 1,    # Only 1 trade at a time
-}
-
-
-# OPTIMIZED CONFIG (Recommended for better win rate)
-# Based on analysis: More selective entries, stronger trends, safer martingale
-BACKTEST_CONFIG_OPTIMIZED = {
-    # ===== SYMBOL & TIMEFRAME =====
-    'symbol': 'GBPUSD',
-    'timeframe': 'H1',
-    'fvg_timeframe': 'H1',
-    'days': 180,
-
-    # ===== ACCOUNT SETTINGS =====
-    'initial_balance': 1000.0,
-    'risk_per_trade': 0.02,
-    'base_lot_size': 0.1,
-
-    # ===== COMMISSION & COSTS =====
-    'commission_per_lot': 7.0,
-    'pip_value': 0.0001,
-
-    # ===== MARTINGALE SETTINGS (Safer) =====
-    'consecutive_losses_trigger': 3,   # Changed from 3 -> 5 (more conservative)
-    'martingale_multiplier': 1.2,      # Changed from 1.3 -> 1.2 (slower escalation)
-    'max_lot_size': 5.0,               # Changed from 10.0 -> 5.0 (safer max)
-
-    # ===== STOP LOSS / TAKE PROFIT (Better R:R) =====
-    'atr_sl_multiplier': 2.0,          # Changed from 1.5 -> 2.0 (wider SL)
-    'atr_tp_multiplier': 4.0,          # Changed from 3.0 -> 4.0 (higher TP)
-                                       # Risk:Reward = 1:2
-
-    # ===== CONFLUENCE SCORING (More Selective) =====
-    'min_confidence_score': 70.0,      # Changed from 70 -> 85 (much more selective)
-    'enable_adx_filter': True,
-    'adx_threshold': 35.0,             # Changed from 25 -> 30 (stronger trends only)
-
-    # ===== CONFLUENCE WEIGHTS =====
-    'confluence_weights': {
-        'fvg': 55,      # Increased from 50 (FVG is primary)
-        'vwap': 25,     # Increased from 20 (price position important)
-        'obv': 10,      # Decreased from 15
-        'volume': 10,   # Decreased from 15
-    },
-
-    # ===== BACKTEST LIMITS =====
-    'max_trades_per_day': 50,
+    # Max trades
+    'max_trades_per_day': 10,
     'max_concurrent_trades': 1,
-}
 
-
-# AGGRESSIVE CONFIG (High risk, high reward)
-# WARNING: Use only if you understand the risks!
-BACKTEST_CONFIG_AGGRESSIVE = {
-    # ===== SYMBOL & TIMEFRAME =====
-    'symbol': 'GBPUSD',
-    'timeframe': 'M15',
-    'fvg_timeframe': 'H1',
-    'days': 180,
-
-    # ===== ACCOUNT SETTINGS =====
-    'initial_balance': 1000.0,
-    'risk_per_trade': 0.02,
-    'base_lot_size': 0.1,
-
-    # ===== COMMISSION & COSTS =====
-    'commission_per_lot': 0.0,
-    'pip_value': 0.0001,
-
-    # ===== MARTINGALE SETTINGS (Aggressive) =====
-    'consecutive_losses_trigger': 3,   # Switch immediately after 1 loss
-    'martingale_multiplier': 1.5,      # High multiplier
-    'max_lot_size': 10.0,
-
-    # ===== STOP LOSS / TAKE PROFIT =====
-    'atr_sl_multiplier': 1.0,          # Tight SL
-    'atr_tp_multiplier': 5.0,          # High TP (1:5 R:R)
-
-    # ===== CONFLUENCE SCORING (Less Selective) =====
-    'min_confidence_score': 60.0,      # Lower threshold = more trades
-    'enable_adx_filter': False,        # No ADX filter = trade in all conditions
-    'adx_threshold': 20.0,
-
-    # ===== CONFLUENCE WEIGHTS =====
-    'confluence_weights': {
-        'fvg': 50,
-        'vwap': 20,
-        'obv': 15,
-        'volume': 15,
-    },
-
-    # ===== BACKTEST LIMITS =====
-    'max_trades_per_day': 100,         # More trades
-    'max_concurrent_trades': 3,        # Multiple positions
+    # Timeout
+    'max_bars_in_trade': 50,       # Exit if no SL/TP hit after 50 candles
 }
 
 
