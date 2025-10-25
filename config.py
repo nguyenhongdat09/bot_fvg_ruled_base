@@ -51,7 +51,7 @@ MT5_CONFIG = {
 # DATA DOWNLOAD CONFIGURATION
 # ============================================
 DATA_CONFIG = {
-    # Default symbol and timeframe
+    # Default symbol and timeframe (for single download)
     'symbol': 'GBPUSD',
     'timeframe': 'M15',  # M1, M5, M15, M30, H1, H4, D1
 
@@ -63,6 +63,65 @@ DATA_CONFIG = {
     # Output
     'save_csv': True,
     'csv_path': None,    # Auto-generate if None: data/{symbol}_{timeframe}_{days}days.csv
+}
+
+
+# ============================================
+# BATCH DOWNLOAD CONFIGURATION
+# ============================================
+BATCH_DOWNLOAD_CONFIG = {
+    # Enable/disable batch download
+    'enabled': True,
+
+    # Symbols to download (list of symbols)
+    'symbols': [
+        # Major pairs
+        'EURUSD',
+        'GBPUSD',
+        'USDJPY',
+        'AUDUSD',
+        'USDCAD',
+        'NZDUSD',
+        'USDCHF',
+
+        # Cross pairs (optional - comment out if not needed)
+        # 'EURJPY',
+        # 'GBPJPY',
+        # 'EURGBP',
+        # 'AUDJPY',
+
+        # Commodities (optional)
+        # 'XAUUSD',  # Gold
+        # 'XAGUSD',  # Silver
+        # 'USOIL',   # Crude Oil
+
+        # Indices (optional)
+        # 'US30',    # Dow Jones
+        # 'NAS100',  # Nasdaq
+        # 'SPX500',  # S&P 500
+    ],
+
+    # Timeframes to download for EACH symbol
+    'timeframes': [
+        'M15',
+        'H1',
+        'H4',
+        # 'M5',   # Uncomment if needed
+        # 'M30',  # Uncomment if needed
+        # 'D1',   # Uncomment if needed
+    ],
+
+    # Data range
+    'days': 180,              # Download last 180 days
+
+    # Download settings
+    'skip_existing': True,    # Skip if file already exists
+    'show_progress': True,    # Show progress bar
+    'delay_between': 0.5,     # Delay between downloads (seconds)
+
+    # Error handling
+    'continue_on_error': True,  # Continue if one symbol fails
+    'max_retries': 2,           # Retry N times if download fails
 }
 
 
