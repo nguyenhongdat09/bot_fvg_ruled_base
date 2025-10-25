@@ -210,13 +210,14 @@ def main():
 
     # Default configuration
     SYMBOL = 'GBPUSD'  # Changed to GBPUSD (available data)
-    TIMEFRAME = 'M15'
+    TIMEFRAME = 'M15'  # Base timeframe for indicators
     DAYS = 180
-    FVG_TIMEFRAME = 'H1'
+    FVG_TIMEFRAME = 'H1'  # FVG analysis on H1
 
-    INITIAL_BALANCE = 10000.0
-    RISK_PER_TRADE = 0.02  # 2%
-    MIN_CONFIDENCE = 70.0  # 70%
+    # RECOMMENDED: Minimum $1000 for this strategy due to $7 commission
+    INITIAL_BALANCE = 1000.0  # Minimum balance to survive drawdown
+    RISK_PER_TRADE = 0.02     # 2% risk per trade ($20/trade)
+    MIN_CONFIDENCE = 70.0     # 70% threshold (80% doesn't improve win rate)
     ENABLE_ADX = True
 
     print("\n" + "="*100)
