@@ -16,9 +16,16 @@ Example:
 """
 
 import pandas as pd
-import pandas_ta as ta
 from typing import Dict, Optional, List
 from .fvg_manager import FVGManager
+
+# Import ATR indicator
+import sys
+from pathlib import Path
+parent_dir = Path(__file__).parent.parent.parent
+if str(parent_dir) not in sys.path:
+    sys.path.insert(0, str(parent_dir))
+from indicators.volatility import ATRIndicator
 
 
 class MultiTimeframeManager:
@@ -98,12 +105,8 @@ class MultiTimeframeManager:
         print(f"  Resampled data: {len(resampled)} candles")
 
         # Step 2: Calculate ATR for this timeframe
-        resampled['atr'] = ta.atr(
-            resampled['high'],
-            resampled['low'],
-            resampled['close'],
-            length=14
-        )
+        atr_indicator = ATRIndicator(period=14)
+        resampled['atr'] = atr_indicator.calculate(resampled)
 
         # Step 3: Create FVGManager for this timeframe
         manager = FVGManager(
