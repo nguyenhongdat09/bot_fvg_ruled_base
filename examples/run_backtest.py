@@ -31,12 +31,19 @@ from config import DATA_DIR
 def run_backtest(
     symbol: str = 'GBPUSD',
     timeframe: str = 'M5',#Timeframe cua indicator
+    symbol: str = 'GBPUSD',
+    timeframe: str = 'M5',#Timeframe cua indicator
     days: int = 180,
     fvg_timeframe: str = 'H1', #Timeframe de phan tich FVG
     initial_balance: float = 200.0,
     risk_per_trade: float = 0.01,
     min_confidence: float = 80.0,
+    fvg_timeframe: str = 'H1', #Timeframe de phan tich FVG
+    initial_balance: float = 200.0,
+    risk_per_trade: float = 0.01,
+    min_confidence: float = 80.0,
     enable_adx: bool = True
+    ):
     ):
     """
     Run backtest
@@ -89,6 +96,7 @@ def run_backtest(
     config = BacktestConfig(
         initial_balance=initial_balance,
         risk_per_trade=risk_per_trade,
+        base_lot_size=0.01,
         base_lot_size=0.01,
         consecutive_losses_trigger=3,
         martingale_multiplier=1.3,
@@ -210,14 +218,13 @@ def main():
 
     # Default configuration
     SYMBOL = 'GBPUSD'  # Changed to GBPUSD (available data)
-    TIMEFRAME = 'M15'  # Base timeframe for indicators
+    TIMEFRAME = 'M15'
     DAYS = 180
-    FVG_TIMEFRAME = 'H1'  # FVG analysis on H1
+    FVG_TIMEFRAME = 'H1'
 
-    # RECOMMENDED: Minimum $1000 for this strategy due to $7 commission
-    INITIAL_BALANCE = 1000.0  # Minimum balance to survive drawdown
-    RISK_PER_TRADE = 0.02     # 2% risk per trade ($20/trade)
-    MIN_CONFIDENCE = 70.0     # 70% threshold (80% doesn't improve win rate)
+    INITIAL_BALANCE = 10000.0
+    RISK_PER_TRADE = 0.02  # 2%
+    MIN_CONFIDENCE = 70.0  # 70%
     ENABLE_ADX = True
 
     print("\n" + "="*100)
