@@ -2,7 +2,15 @@
 MT5 Data Downloader - Download historical data from MetaTrader 5
 """
 
-import MetaTrader5 as mt5
+# Try to import MetaTrader5, gracefully handle if not available
+try:
+    import MetaTrader5 as mt5
+    MT5_AVAILABLE = True
+except ImportError:
+    MT5_AVAILABLE = False
+    print("⚠️  MetaTrader5 module not available. MT5 data download will not work.")
+    print("   You can still use CSV files or sample data.")
+
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
@@ -30,6 +38,10 @@ def initialize_mt5(login: Optional[int] = None,
         bool: True if successful, False otherwise
     """
     
+    if not MT5_AVAILABLE:
+        print("❌ MetaTrader5 module is not available")
+        return False
+    
     # Use config values if not provided
     login = login or MT5_CONFIG.get('login')
     password = password or MT5_CONFIG.get('password')
@@ -55,8 +67,11 @@ def initialize_mt5(login: Optional[int] = None,
 
 def shutdown_mt5():
     """Shutdown MT5 connection"""
-    mt5.shutdown()
-    print("✓ MT5 connection closed")
+    if MT5_AVAILABLE:
+        mt5.shutdown()
+        print("✓ MT5 connection closed")
+    else:
+        print("⚠️  MT5 not available, nothing to shutdown")
 
 
 def get_mt5_timeframe(timeframe_str: str) -> int:
@@ -69,6 +84,9 @@ def get_mt5_timeframe(timeframe_str: str) -> int:
     Returns:
         int: MT5 timeframe constant
     """
+    
+    if not MT5_AVAILABLE:
+        return 15  # Default to 15 minutes
     
     timeframe_map = {
         'M1': mt5.TIMEFRAME_M1,
@@ -105,6 +123,10 @@ def download_ohlcv_data(symbol: str,
                      Index is datetime
                      Returns None if download fails
     """
+    
+    if not MT5_AVAILABLE:
+        print("❌ MetaTrader5 module not available. Cannot download data.")
+        return None
     
     # Get MT5 timeframe
     mt5_timeframe = get_mt5_timeframe(timeframe)
