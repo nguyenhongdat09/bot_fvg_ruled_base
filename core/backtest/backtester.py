@@ -345,23 +345,22 @@ class Backtester:
             self.winning_trades += 1
             self.consecutive_losses = 0
 
-            # Reset to virtual mode after win in real mode
-            if self.mode == TradeMode.REAL:
-                self.mode = TradeMode.VIRTUAL
-                self.current_lot_size = self.config['base_lot_size']
+            # Reset to virtual mode and base lot size after win
+            self.mode = TradeMode.VIRTUAL
+            self.current_lot_size = self.config['base_lot_size']
         else:
             self.losing_trades += 1
             self.consecutive_losses += 1
 
+            # FIXED: Apply martingale on EVERY loss (VIRTUAL or REAL)
+            # This allows lot size to compound BEFORE switching to REAL mode
+            self.current_lot_size *= self.config['martingale_multiplier']
+            self.current_lot_size = min(self.current_lot_size, self.config['max_lot_size'])
+
             # Switch to real mode after consecutive losses
+            # Keep the already-compounded lot size!
             if self.consecutive_losses >= self.config['consecutive_losses_trigger']:
-                if self.mode == TradeMode.VIRTUAL:
-                    # First loss in real mode - start with base size
-                    self.mode = TradeMode.REAL
-                    self.current_lot_size = self.config['base_lot_size']
-                else:
-                    # Subsequent losses in real mode - apply martingale
-                    self.current_lot_size *= self.config['martingale_multiplier']
+                self.mode = TradeMode.REAL
 
         # Add to trades history
         self.trades.append(trade)
