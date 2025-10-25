@@ -24,42 +24,31 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from strategies.fvg_confluence_strategy import FVGConfluenceStrategy
-from core.backtest.backtester import Backtester, BacktestConfig, TradeMode
-from config import DATA_DIR
+from core.backtest.backtester import Backtester, TradeMode
+from config import DATA_DIR, BACKTEST_CONFIG
 
 
-def run_backtest(
-    symbol: str = 'EURUSD',
-    timeframe: str = 'M15',
-    days: int = 180,
-    fvg_timeframe: str = 'H1',
-    initial_balance: float = 10000.0,
-    risk_per_trade: float = 0.02,
-    min_confidence: float = 70.0,
-    enable_adx: bool = True
-):
+def run_backtest():
     """
-    Run backtest
+    Run backtest using BACKTEST_CONFIG from config.py
 
-    Args:
-        symbol: Trading symbol
-        timeframe: Base timeframe
-        days: Data period
-        fvg_timeframe: FVG analysis timeframe
-        initial_balance: Starting balance
-        risk_per_trade: Risk per trade (2% = 0.02)
-        min_confidence: Minimum confluence score (70%)
-        enable_adx: Enable ADX filter
+    IMPORTANT: To change settings, edit config.py -> BACKTEST_CONFIG
 
     Returns:
         tuple: (backtester, strategy, results_df)
     """
+    # Get config from config.py
+    cfg = BACKTEST_CONFIG
+
     print("\n" + "="*100)
     print("FVG + CONFLUENCE BACKTEST")
     print("="*100)
 
     # 1. Load data
-    print("\n📂 STEP 1: Loading Data...")
+    print("\n[STEP 1] Loading Data...")
+    symbol = cfg['symbol']
+    timeframe = cfg['timeframe']
+    days = cfg['days']
     data_file = DATA_DIR / f"{symbol}_{timeframe}_{days}days.csv"
 
     if not data_file.exists():
@@ -75,34 +64,26 @@ def run_backtest(
     print(f"   Date Range: {data.index[0]} to {data.index[-1]}")
 
     # 2. Initialize Strategy
-    print("\n🎯 STEP 2: Initializing Strategy...")
+    print("\n[STEP 2] Initializing Strategy...")
     strategy = FVGConfluenceStrategy(
         data=data,
-        base_timeframe=timeframe,
-        fvg_timeframe=fvg_timeframe,
-        enable_adx_filter=enable_adx,
-        min_score_threshold=min_confidence
+        base_timeframe=cfg['timeframe'],
+        fvg_timeframe=cfg['fvg_timeframe'],
+        enable_adx_filter=cfg['enable_adx_filter'],
+        min_score_threshold=cfg['min_confidence_score']
     )
 
     # 3. Initialize Backtester
-    print("\n💰 STEP 3: Initializing Backtester...")
-    config = BacktestConfig(
-        initial_balance=initial_balance,
-        risk_per_trade=risk_per_trade,
-        base_lot_size=0.1,
-        consecutive_losses_trigger=3,
-        martingale_multiplier=1.3,
-        max_lot_size=10.0,
-        min_confidence_score=min_confidence
-    )
-
-    backtester = Backtester(config)
+    print("\n[STEP 3] Initializing Backtester...")
+    # Use config directly from config.py
+    backtester = Backtester(cfg)
     print(f"✅ Backtester ready")
-    print(f"   Initial Balance: ${config.initial_balance:,.2f}")
-    print(f"   Risk per Trade: {config.risk_per_trade * 100}%")
-    print(f"   Base Lot Size: {config.base_lot_size}")
-    print(f"   Martingale Trigger: {config.consecutive_losses_trigger} losses")
-    print(f"   Martingale Multiplier: {config.martingale_multiplier}x")
+    print(f"   Initial Balance: ${cfg['initial_balance']:,.2f}")
+    print(f"   Risk per Trade: {cfg['risk_per_trade'] * 100}%")
+    print(f"   Base Lot Size: {cfg['base_lot_size']}")
+    print(f"   Commission: ${cfg['commission_per_lot']}/lot")
+    print(f"   Martingale Trigger: {cfg['consecutive_losses_trigger']} losses")
+    print(f"   Martingale Multiplier: {cfg['martingale_multiplier']}x")
 
     # 4. Run Backtest
     print("\n🚀 STEP 4: Running Backtest...")
@@ -143,7 +124,7 @@ def run_backtest(
                 print(f"   Balance: ${backtester.balance:,.2f}")
 
                 # Show mode change
-                if backtester.consecutive_losses >= config.consecutive_losses_trigger:
+                if backtester.consecutive_losses >= cfg['consecutive_losses_trigger']:
                     print(f"   ⚠️  Consecutive Losses: {backtester.consecutive_losses}")
                     if backtester.mode == TradeMode.REAL:
                         print(f"   🔄 Mode: REAL (Martingale active)")
@@ -206,43 +187,30 @@ def run_backtest(
 
 
 def main():
-    """Main function"""
+    """
+    Main function
 
-    # Default configuration
-    SYMBOL = 'GBPUSD'  # Changed to GBPUSD (available data)
-    TIMEFRAME = 'M15'  # Base timeframe for indicators
-    DAYS = 180
-    FVG_TIMEFRAME = 'H1'  # FVG analysis on H1
-
-    # RECOMMENDED: Minimum $1000 for this strategy due to $7 commission
-    INITIAL_BALANCE = 1000.0  # Minimum balance to survive drawdown
-    RISK_PER_TRADE = 0.02     # 2% risk per trade ($20/trade)
-    MIN_CONFIDENCE = 70.0     # 70% threshold (80% doesn't improve win rate)
-    ENABLE_ADX = True
+    IMPORTANT: All config now in config.py -> BACKTEST_CONFIG
+    To change settings, edit config.py directly!
+    """
+    cfg = BACKTEST_CONFIG
 
     print("\n" + "="*100)
-    print("BACKTEST CONFIGURATION")
+    print("BACKTEST CONFIGURATION (from config.py)")
     print("="*100)
-    print(f"Symbol: {SYMBOL}")
-    print(f"Timeframe: {TIMEFRAME} (FVG on {FVG_TIMEFRAME})")
-    print(f"Data Period: {DAYS} days")
-    print(f"Initial Balance: ${INITIAL_BALANCE:,.2f}")
-    print(f"Risk per Trade: {RISK_PER_TRADE * 100}%")
-    print(f"Min Confidence Score: {MIN_CONFIDENCE}%")
-    print(f"ADX Filter: {'Enabled' if ENABLE_ADX else 'Disabled'}")
+    print(f"Symbol: {cfg['symbol']}")
+    print(f"Timeframe: {cfg['timeframe']} (FVG on {cfg['fvg_timeframe']})")
+    print(f"Data Period: {cfg['days']} days")
+    print(f"Initial Balance: ${cfg['initial_balance']:,.2f}")
+    print(f"Risk per Trade: {cfg['risk_per_trade'] * 100}%")
+    print(f"Commission: ${cfg['commission_per_lot']}/lot")
+    print(f"Min Confidence Score: {cfg['min_confidence_score']}%")
+    print(f"ADX Filter: {'Enabled' if cfg['enable_adx_filter'] else 'Disabled'}")
+    print(f"\nTo change these settings, edit: config.py -> BACKTEST_CONFIG")
     print("="*100)
 
-    # Run backtest
-    backtester, strategy, results = run_backtest(
-        symbol=SYMBOL,
-        timeframe=TIMEFRAME,
-        days=DAYS,
-        fvg_timeframe=FVG_TIMEFRAME,
-        initial_balance=INITIAL_BALANCE,
-        risk_per_trade=RISK_PER_TRADE,
-        min_confidence=MIN_CONFIDENCE,
-        enable_adx=ENABLE_ADX
-    )
+    # Run backtest (uses config from config.py)
+    backtester, strategy, results = run_backtest()
 
     if backtester is None:
         print("\n❌ Backtest failed!")

@@ -203,23 +203,46 @@ STRATEGY_CONFIG = {
 # BACKTEST CONFIGURATION
 # ============================================
 BACKTEST_CONFIG = {
-    # Virtual/Real mode switching
-    'loss_streak_trigger': 3,      # Switch to REAL after N losses
+    # ===== SYMBOL & TIMEFRAME =====
+    'symbol': 'GBPUSD',            # Symbol de backtest
+    'timeframe': 'M15',            # Base timeframe (indicators)
+    'fvg_timeframe': 'H1',         # FVG analysis timeframe (cao hon base)
+    'days': 180,                   # So ngay data
 
-    # Martingale settings
-    'base_lot': 0.01,
-    'martingale_factor': 1.3,      # Lot � 1.3 after each loss
-    'max_martingale_steps': 5,     # Max 5 consecutive real trades
+    # ===== ACCOUNT SETTINGS =====
+    'initial_balance': 1000.0,     # Starting balance ($1000 minimum recommended)
+    'risk_per_trade': 0.02,        # Risk per trade (2% = 0.02)
+    'base_lot_size': 0.1,          # Base lot size in virtual mode
 
-    # Starting capital
-    'initial_balance': 10000,      # USD
+    # ===== COMMISSION & COSTS =====
+    'commission_per_lot': 7.0,     # Commission per lot (round trip) - DIEU CHINH THEO BROKER!
+    'pip_value': 0.0001,           # For 5-digit broker (4-digit = 0.01)
 
-    # Max trades
-    'max_trades_per_day': 10,
-    'max_concurrent_trades': 1,
+    # ===== MARTINGALE SETTINGS =====
+    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N losses
+    'martingale_multiplier': 1.3,     # Lot x 1.3 after each loss
+    'max_lot_size': 10.0,             # Maximum lot size limit
 
-    # Timeout
-    'max_bars_in_trade': 50,       # Exit if no SL/TP hit after 50 candles
+    # ===== STOP LOSS / TAKE PROFIT =====
+    'atr_sl_multiplier': 1.5,      # SL = ATR x 1.5
+    'atr_tp_multiplier': 3.0,      # TP = ATR x 3.0
+
+    # ===== CONFLUENCE SCORING =====
+    'min_confidence_score': 70.0,  # Minimum score to trade (70%)
+    'enable_adx_filter': True,     # Enable ADX filter for trending markets
+    'adx_threshold': 25.0,         # ADX >= 25 for trending
+
+    # ===== CONFLUENCE WEIGHTS (Tong = 100) =====
+    'confluence_weights': {
+        'fvg': 50,      # FVG weight (primary signal)
+        'vwap': 20,     # VWAP weight
+        'obv': 15,      # OBV weight
+        'volume': 15,   # Volume spike weight
+    },
+
+    # ===== BACKTEST LIMITS =====
+    'max_trades_per_day': 50,      # Max trades per day (unlimited = None)
+    'max_concurrent_trades': 1,    # Only 1 trade at a time
 }
 
 
