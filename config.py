@@ -109,7 +109,7 @@ BATCH_DOWNLOAD_CONFIG = {
     ],
 
     # Data range
-    'days': 365,              # Download last 365 days
+    'days': 730,              # Download last 365 days
 
     # Download settings
     'skip_existing': True,    # Skip if file already exists
@@ -128,7 +128,7 @@ BATCH_DOWNLOAD_CONFIG = {
 FVG_CONFIG = {
     # FVG Detection
     'lookback_days': 90,           # FVG valid for 90 days
-    'min_gap_atr_ratio': 0.3,      # Gap must be >= ATR � 0.3
+    'min_gap_atr_ratio': 0.5,      # Gap must be >= ATR x 0.5
     'min_gap_pips': None,          # Optional: Gap must be >= X pips
 
     # Visualization
@@ -199,14 +199,17 @@ STRATEGY_CONFIG = {
 # BACKTEST CONFIGURATION
 # CHỈ CHỈNH Ở ĐÂY - TẤT CẢ CONFIG TẬP TRUNG 1 CHỖ!
 # ============================================
-
+#Lotsize làm tròn lên 2 chữ số thập phân, ví dụ: 0.013 -> 0.01 hoặc 0.017 -> 0.02
+#Bây giờ không dùng martingale nữa mà dùng dynamic risk ví dụ thua 3 lệnh ảo là -5$ thì lệnh thứ thật thứ 5 lot size phải làm sao canh chỉnh nhân với pip TP fixed hoặc ATR phải >= 10$ và lỡ thua thì lệnh thứ 6 lot size phải canh chỉnh TP có lãi và gỡ hết khoảng lỗ đã dính mấy lệnh trước v.v... để đảm bảo lợi nhuận luôn dương khi thắng lệnh cuối cùng 
+#Chỉnh sửa TP SL theo pips hoặc theo ATR tùy chọn ngay trong BACKTEST_CONFIG hiện tại chỉ set được SL TP Theo ATR
+#Khi run backtest xong có thể xuất file csv có thể nhiều cột như time frame , fvg_timeframe ,base_lot_size ... các chi tiết càng tốt để tiện phân tích cho AI đọc và tối ưu
 # DEFAULT CONFIG (Conservative - for testing)
 BACKTEST_CONFIG = {
     # ===== SYMBOL & TIMEFRAME =====
     'symbol': 'GBPUSD',            # Symbol de backtest
-    'timeframe': 'H1',            # Base timeframe (indicators)
+    'timeframe': 'M15',            # Base timeframe (indicators)
     'fvg_timeframe': 'H1',         # FVG analysis timeframe (cao hon base)
-    'days': 180,                   # So ngay data
+    'days': 365,                   # So ngay data
 
     # ===== ACCOUNT SETTINGS =====
     'initial_balance': 200.0,     # Starting balance ($1000 minimum recommended)
@@ -218,7 +221,7 @@ BACKTEST_CONFIG = {
     'pip_value': 0.0001,           # For 5-digit broker (4-digit = 0.01)
 
     # ===== MARTINGALE SETTINGS =====
-    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N losses
+    'consecutive_losses_trigger': 4,  # Switch to REAL mode after N losses
     'martingale_multiplier': 1.3,     # Lot x 1.3 after each loss
     'max_lot_size': 10.0,             # Maximum lot size limit
 
@@ -227,21 +230,21 @@ BACKTEST_CONFIG = {
     'atr_tp_multiplier': 3.0,      # TP = ATR x 3.0
 
     # ===== CONFLUENCE SCORING =====
-    'min_confidence_score': 80.0,  # Minimum score to trade (80%)
+    'min_confidence_score': 70.0,  # Minimum score to trade (80%)
     'enable_adx_filter': True,     # Enable ADX filter for trending markets
     'adx_threshold': 35.0,         # ADX >= 35 for trending
 
     # ===== CONFLUENCE WEIGHTS (Tong = 100) =====
     'confluence_weights': {
-        'fvg': 50,      # FVG weight (primary signal)
-        'vwap': 20,     # VWAP weight
-        'obv': 15,      # OBV weight
-        'volume': 15,   # Volume spike weight
+        'fvg': 70,      # FVG weight (primary signal)
+        'vwap': 10,     # VWAP weight
+        'obv': 10,      # OBV weight
+        'volume': 10,   # Volume spike weight
     },
 
     # ===== BACKTEST LIMITS =====
     'max_trades_per_day': 50,      # Max trades per day (unlimited = None)
-    'max_concurrent_trades': 3,    # Only 1 trade at a time
+    'max_concurrent_trades': 1,    # Only 1 trade at a time
 }
 
 
