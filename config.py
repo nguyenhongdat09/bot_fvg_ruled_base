@@ -217,14 +217,23 @@ BACKTEST_CONFIG = {
     'commission_per_lot': 0.0,     # Commission per lot (round trip) - DIEU CHINH THEO BROKER!
     'pip_value': 0.0001,           # For 5-digit broker (4-digit = 0.01)
 
-    # ===== MARTINGALE SETTINGS =====
-    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N losses
-    'martingale_multiplier': 1.3,     # Lot x 1.3 after each loss
-    'max_lot_size': 10.0,             # Maximum lot size limit
+    # ===== DYNAMIC RISK RECOVERY (Replaces Martingale!) =====
+    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N virtual losses
+    'recovery_multiplier': 2.0,       # Recovery target = Total Loss × 2.0 (recover + profit)
+    'min_lot_size': 0.01,             # Minimum lot size (broker limit)
+    'max_lot_size': 10.0,             # Maximum lot size (risk limit)
 
     # ===== STOP LOSS / TAKE PROFIT =====
-    'atr_sl_multiplier': 1.5,      # SL = ATR x 1.5
-    'atr_tp_multiplier': 3.0,      # TP = ATR x 3.0
+    # Choose mode: True = ATR-based (dynamic), False = Fixed pips
+    'use_atr_sl_tp': True,         # True = ATR mode, False = Pips mode
+
+    # ATR Mode Settings (used when use_atr_sl_tp = True)
+    'atr_sl_multiplier': 1.5,      # SL = ATR × 1.5
+    'atr_tp_multiplier': 3.0,      # TP = ATR × 3.0
+
+    # Pips Mode Settings (used when use_atr_sl_tp = False)
+    'sl_pips': 50,                 # SL = 50 pips (fixed)
+    'tp_pips': 100,                # TP = 100 pips (fixed)
 
     # ===== CONFLUENCE SCORING =====
     'min_confidence_score': 80.0,  # Minimum score to trade (80%)

@@ -148,6 +148,10 @@ class Backtester:
         self.consecutive_losses = 0
         self.current_lot_size = self.config['base_lot_size']
 
+        # Dynamic Risk Recovery
+        self.total_virtual_loss = 0.0  # Track total loss in VIRTUAL mode
+        self.total_real_loss = 0.0     # Track total loss in REAL mode (for recovery calculation)
+
         # Trade tracking
         self.trades: List[Trade] = []
         self.current_trade: Optional[Trade] = None  # Renamed to avoid conflict with open_trade() method
@@ -158,6 +162,111 @@ class Backtester:
         self.losing_trades = 0
         self.total_pnl = 0.0
         self.max_drawdown = 0.0
+
+    def round_lot_size(self, lot_size: float) -> float:
+        """
+        Round lot size to 2 decimal places
+        Examples: 0.013 → 0.01, 0.017 → 0.02, 0.155 → 0.16
+
+        Args:
+            lot_size: Raw lot size
+
+        Returns:
+            Rounded lot size (2 decimals)
+        """
+        import math
+        # Round to 2 decimal places (0.01 precision)
+        rounded = round(lot_size, 2)
+
+        # Ensure minimum lot size
+        if rounded < self.config['min_lot_size']:
+            rounded = self.config['min_lot_size']
+
+        # Ensure maximum lot size
+        if rounded > self.config['max_lot_size']:
+            rounded = self.config['max_lot_size']
+
+        return rounded
+
+    def calculate_sl_tp(self, current_price: float, direction: str, atr_value: float = None):
+        """
+        Calculate SL and TP based on mode (ATR or PIPS)
+
+        Args:
+            current_price: Current market price
+            direction: 'BUY' or 'SELL'
+            atr_value: ATR value (required if use_atr_sl_tp = True)
+
+        Returns:
+            tuple: (sl_price, tp_price, sl_distance_pips, tp_distance_pips)
+        """
+        pip_value = self.config['pip_value']
+
+        if self.config['use_atr_sl_tp']:
+            # ATR Mode
+            if atr_value is None:
+                raise ValueError("ATR value required when use_atr_sl_tp = True")
+
+            sl_distance = atr_value * self.config['atr_sl_multiplier']
+            tp_distance = atr_value * self.config['atr_tp_multiplier']
+        else:
+            # PIPS Mode
+            sl_distance = self.config['sl_pips'] * pip_value
+            tp_distance = self.config['tp_pips'] * pip_value
+
+        # Calculate prices
+        if direction == 'BUY':
+            sl_price = current_price - sl_distance
+            tp_price = current_price + tp_distance
+        else:  # SELL
+            sl_price = current_price + sl_distance
+            tp_price = current_price - tp_distance
+
+        # Calculate distances in pips (for lot size calculation)
+        sl_distance_pips = sl_distance / pip_value
+        tp_distance_pips = tp_distance / pip_value
+
+        return sl_price, tp_price, sl_distance_pips, tp_distance_pips
+
+    def calculate_recovery_lot_size(self, tp_distance_pips: float) -> float:
+        """
+        Calculate lot size needed to recover total losses + profit
+
+        Formula:
+            Required Profit = (Total Virtual Loss + Total Real Loss) × recovery_multiplier
+            Lot Size = Required Profit / (TP Distance in pips × pip_value)
+
+        Args:
+            tp_distance_pips: TP distance in pips
+
+        Returns:
+            Calculated lot size (rounded to 2 decimals)
+        """
+        total_loss = abs(self.total_virtual_loss) + abs(self.total_real_loss)
+
+        # Target profit = loss × recovery_multiplier (default 2.0)
+        # Example: -$5 loss → need $10 profit (recover $5 + gain $5)
+        required_profit = total_loss * self.config['recovery_multiplier']
+
+        # Minimum required profit
+        min_required_profit = 10.0  # At least $10 profit as user specified
+        if required_profit < min_required_profit:
+            required_profit = min_required_profit
+
+        # Calculate lot size
+        # Profit = (TP pips × pip_value × lot_size) - commission
+        # Simplified: lot_size = required_profit / (TP pips × pip_value)
+        pip_value_per_lot = tp_distance_pips * self.config['pip_value']
+
+        if pip_value_per_lot == 0:
+            return self.config['base_lot_size']
+
+        raw_lot_size = required_profit / pip_value_per_lot
+
+        # Round to 2 decimals
+        lot_size = self.round_lot_size(raw_lot_size)
+
+        return lot_size
 
     def should_trade(self, signal_data: dict) -> bool:
         """
@@ -189,16 +298,16 @@ class Backtester:
         timestamp: datetime,
         signal_data: dict,
         current_price: float,
-        atr_value: float
+        atr_value: float = None
     ) -> Optional[Trade]:
         """
-        Open a new trade
+        Open a new trade with dynamic risk recovery
 
         Args:
             timestamp: Current timestamp
             signal_data: Signal data from ConfluenceScorer
             current_price: Current market price
-            atr_value: Current ATR value
+            atr_value: Current ATR value (required if use_atr_sl_tp = True)
 
         Returns:
             Trade object if opened, None otherwise
@@ -208,22 +317,21 @@ class Backtester:
 
         direction = signal_data['signal']
 
-        # Calculate SL and TP based on ATR
-        sl_distance = atr_value * self.config['atr_sl_multiplier']
-        tp_distance = atr_value * self.config['atr_tp_multiplier']
-
-        if direction == 'BUY':
-            sl_price = current_price - sl_distance
-            tp_price = current_price + tp_distance
-        else:  # SELL
-            sl_price = current_price + sl_distance
-            tp_price = current_price - tp_distance
+        # Calculate SL and TP (supports both ATR and PIPS modes)
+        sl_price, tp_price, sl_distance_pips, tp_distance_pips = self.calculate_sl_tp(
+            current_price, direction, atr_value
+        )
 
         # Calculate lot size based on mode
         if self.mode == TradeMode.VIRTUAL:
+            # Virtual mode: use base lot size
             lot_size = self.config['base_lot_size']
-        else:  # REAL mode with martingale
-            lot_size = min(self.current_lot_size, self.config['max_lot_size'])
+        else:
+            # REAL mode: calculate lot size for recovery
+            lot_size = self.calculate_recovery_lot_size(tp_distance_pips)
+
+        # Round lot size to 2 decimals
+        lot_size = self.round_lot_size(lot_size)
 
         # Create trade
         trade = Trade(
@@ -340,27 +448,33 @@ class Backtester:
         if drawdown > self.max_drawdown:
             self.max_drawdown = drawdown
 
-        # Update win/loss counts
+        # Update win/loss counts and dynamic risk recovery
         if trade.is_win():
             self.winning_trades += 1
             self.consecutive_losses = 0
 
-            # Reset to virtual mode and base lot size after win
+            # Reset to virtual mode and clear losses
             self.mode = TradeMode.VIRTUAL
+            self.total_virtual_loss = 0.0
+            self.total_real_loss = 0.0
             self.current_lot_size = self.config['base_lot_size']
         else:
             self.losing_trades += 1
             self.consecutive_losses += 1
 
-            # FIXED: Apply martingale on EVERY loss (VIRTUAL or REAL)
-            # This allows lot size to compound BEFORE switching to REAL mode
-            self.current_lot_size *= self.config['martingale_multiplier']
-            self.current_lot_size = min(self.current_lot_size, self.config['max_lot_size'])
+            # Track losses by mode
+            if trade.mode == TradeMode.VIRTUAL:
+                # Accumulate virtual losses
+                self.total_virtual_loss += trade.pnl  # pnl is negative for losses
+            else:
+                # Accumulate real losses
+                self.total_real_loss += trade.pnl
 
-            # Switch to real mode after consecutive losses
-            # Keep the already-compounded lot size!
+            # Switch to REAL mode after consecutive losses
             if self.consecutive_losses >= self.config['consecutive_losses_trigger']:
                 self.mode = TradeMode.REAL
+                # Note: lot size will be calculated dynamically in next open_trade()
+                # based on total_virtual_loss + total_real_loss
 
         # Add to trades history
         self.trades.append(trade)
