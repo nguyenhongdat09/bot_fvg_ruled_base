@@ -55,7 +55,9 @@ def run_single_backtest(data, config):
             base_timeframe=config['timeframe'],
             fvg_timeframe=config['fvg_timeframe'],
             enable_adx_filter=config['enable_adx_filter'],
-            min_score_threshold=config['min_confidence_score']
+            adx_threshold=config['adx_threshold'],  # FIXED: Pass ADX threshold!
+            min_score_threshold=config['min_confidence_score'],
+            confluence_weights=config.get('confluence_weights')  # FIXED: Pass weights!
         )
 
         # Initialize backtester

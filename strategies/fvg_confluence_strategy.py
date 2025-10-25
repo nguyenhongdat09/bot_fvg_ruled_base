@@ -60,7 +60,8 @@ class FVGConfluenceStrategy:
         config: dict = None,
         enable_adx_filter: bool = True,
         adx_threshold: float = 25.0,
-        min_score_threshold: float = 70.0
+        min_score_threshold: float = 70.0,
+        confluence_weights: dict = None
     ):
         """
         Initialize strategy
@@ -73,6 +74,7 @@ class FVGConfluenceStrategy:
             enable_adx_filter: Enable ADX filter
             adx_threshold: ADX threshold for trending market
             min_score_threshold: Minimum confluence score to trade (70%)
+            confluence_weights: Custom confluence weights (default: FVG 50%, VWAP 20%, OBV 15%, Volume 15%)
         """
         self.data = data.copy()
         self.base_timeframe = base_timeframe
@@ -82,6 +84,7 @@ class FVGConfluenceStrategy:
         self.enable_adx_filter = enable_adx_filter
         self.adx_threshold = adx_threshold
         self.min_score_threshold = min_score_threshold
+        self.confluence_weights = confluence_weights  # Store weights for later use
 
         print(f"\n{'='*80}")
         print("FVG + CONFLUENCE STRATEGY INITIALIZATION")
@@ -161,13 +164,17 @@ class FVGConfluenceStrategy:
         """Setup confluence scorer"""
         print("\n[CONFLUENCE] Setting up Confluence Scorer...")
 
-        # Default weights: FVG 50%, VWAP 20%, OBV 15%, Volume 15%
-        weights = {
-            'fvg': 50,
-            'vwap': 20,
-            'obv': 15,
-            'volume': 15,
-        }
+        # Use custom weights if provided, otherwise use defaults
+        if self.confluence_weights is not None:
+            weights = self.confluence_weights
+        else:
+            # Default weights: FVG 50%, VWAP 20%, OBV 15%, Volume 15%
+            weights = {
+                'fvg': 50,
+                'vwap': 20,
+                'obv': 15,
+                'volume': 15,
+            }
 
         self.confluence_scorer = ConfluenceScorer(
             weights=weights,
@@ -176,7 +183,7 @@ class FVGConfluenceStrategy:
         )
 
         print(f"   Weights: {weights}")
-        print(f"   ADX Filter: {self.enable_adx_filter}")
+        print(f"   ADX Filter: {self.enable_adx_filter} (threshold={self.adx_threshold})")
         print("   [OK] Confluence Scorer ready")
 
     def analyze(self, index: int) -> Dict:

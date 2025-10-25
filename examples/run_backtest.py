@@ -70,7 +70,9 @@ def run_backtest():
         base_timeframe=cfg['timeframe'],
         fvg_timeframe=cfg['fvg_timeframe'],
         enable_adx_filter=cfg['enable_adx_filter'],
-        min_score_threshold=cfg['min_confidence_score']
+        adx_threshold=cfg['adx_threshold'],  # FIXED: Pass ADX threshold!
+        min_score_threshold=cfg['min_confidence_score'],
+        confluence_weights=cfg.get('confluence_weights')  # FIXED: Pass weights!
     )
 
     # 3. Initialize Backtester
