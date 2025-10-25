@@ -139,14 +139,14 @@ class Backtester:
         self.config = config or BacktestConfig()
 
         # Account state
-        self.balance = self.config.initial_balance
-        self.equity = self.config.initial_balance
-        self.peak_balance = self.config.initial_balance
+        self.balance = self.config['initial_balance']
+        self.equity = self.config['initial_balance']
+        self.peak_balance = self.config['initial_balance']
 
         # Trading state
         self.mode = TradeMode.VIRTUAL
         self.consecutive_losses = 0
-        self.current_lot_size = self.config.base_lot_size
+        self.current_lot_size = self.config['base_lot_size']
 
         # Trade tracking
         self.trades: List[Trade] = []
@@ -179,7 +179,7 @@ class Backtester:
 
         # Check confidence score
         score = signal_data.get('total_score', 0)
-        if score < self.config.min_confidence_score:
+        if score < self.config['min_confidence_score']:
             return False
 
         return True
@@ -209,8 +209,8 @@ class Backtester:
         direction = signal_data['signal']
 
         # Calculate SL and TP based on ATR
-        sl_distance = atr_value * self.config.atr_sl_multiplier
-        tp_distance = atr_value * self.config.atr_tp_multiplier
+        sl_distance = atr_value * self.config['atr_sl_multiplier']
+        tp_distance = atr_value * self.config['atr_tp_multiplier']
 
         if direction == 'BUY':
             sl_price = current_price - sl_distance
@@ -221,9 +221,9 @@ class Backtester:
 
         # Calculate lot size based on mode
         if self.mode == TradeMode.VIRTUAL:
-            lot_size = self.config.base_lot_size
+            lot_size = self.config['base_lot_size']
         else:  # REAL mode with martingale
-            lot_size = min(self.current_lot_size, self.config.max_lot_size)
+            lot_size = min(self.current_lot_size, self.config['max_lot_size'])
 
         # Create trade
         trade = Trade(
@@ -321,10 +321,10 @@ class Backtester:
             return None
 
         trade = self.current_trade
-        trade.close(timestamp, exit_price, exit_reason, self.config.pip_value)
+        trade.close(timestamp, exit_price, exit_reason, self.config['pip_value'])
 
         # Apply commission
-        commission = self.config.commission_per_lot * trade.lot_size
+        commission = self.config['commission_per_lot'] * trade.lot_size
         trade.pnl -= commission
 
         # Update balance
@@ -348,20 +348,20 @@ class Backtester:
             # Reset to virtual mode after win in real mode
             if self.mode == TradeMode.REAL:
                 self.mode = TradeMode.VIRTUAL
-                self.current_lot_size = self.config.base_lot_size
+                self.current_lot_size = self.config['base_lot_size']
         else:
             self.losing_trades += 1
             self.consecutive_losses += 1
 
             # Switch to real mode after consecutive losses
-            if self.consecutive_losses >= self.config.consecutive_losses_trigger:
+            if self.consecutive_losses >= self.config['consecutive_losses_trigger']:
                 if self.mode == TradeMode.VIRTUAL:
                     # First loss in real mode - start with base size
                     self.mode = TradeMode.REAL
-                    self.current_lot_size = self.config.base_lot_size
+                    self.current_lot_size = self.config['base_lot_size']
                 else:
                     # Subsequent losses in real mode - apply martingale
-                    self.current_lot_size *= self.config.martingale_multiplier
+                    self.current_lot_size *= self.config['martingale_multiplier']
 
         # Add to trades history
         self.trades.append(trade)
@@ -405,10 +405,10 @@ class Backtester:
             'losing_trades': self.losing_trades,
             'win_rate': (self.winning_trades / self.total_trades * 100) if self.total_trades > 0 else 0,
 
-            'initial_balance': self.config.initial_balance,
+            'initial_balance': self.config['initial_balance'],
             'final_balance': self.balance,
             'total_pnl': self.total_pnl,
-            'return_pct': ((self.balance - self.config.initial_balance) / self.config.initial_balance * 100),
+            'return_pct': ((self.balance - self.config['initial_balance']) / self.config['initial_balance'] * 100),
 
             'max_drawdown': self.max_drawdown * 100,
             'profit_factor': profit_factor,
