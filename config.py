@@ -98,8 +98,7 @@ BATCH_DOWNLOAD_CONFIG = {
     ],
 
     # Timeframes to download for EACH symbol
-    'timeframes': [
-        'M5',
+    'timeframes': [ 
         'M15', 
         'H1',
         'H4',
@@ -110,7 +109,7 @@ BATCH_DOWNLOAD_CONFIG = {
     ],
 
     # Data range
-    'days': 180,              # Download last 180 days
+    'days': 365,              # Download last 365 days
 
     # Download settings
     'skip_existing': True,    # Skip if file already exists
@@ -187,8 +186,8 @@ STRATEGY_CONFIG = {
     'high_confidence_risk': 2.0,   # Risk 2% (high confidence)
 
     # Stop Loss / Take Profit (in pips)
-    'sl_pips': 50,
-    'tp_pips': 100,
+    'sl_pips': 20,
+    'tp_pips': 30,
 
     # Or use ATR-based SL/TP
     'use_atr_sl_tp': False,
@@ -205,7 +204,7 @@ STRATEGY_CONFIG = {
 BACKTEST_CONFIG = {
     # ===== SYMBOL & TIMEFRAME =====
     'symbol': 'GBPUSD',            # Symbol de backtest
-    'timeframe': 'M15',            # Base timeframe (indicators)
+    'timeframe': 'H1',            # Base timeframe (indicators)
     'fvg_timeframe': 'H1',         # FVG analysis timeframe (cao hon base)
     'days': 180,                   # So ngay data
 
@@ -219,7 +218,7 @@ BACKTEST_CONFIG = {
     'pip_value': 0.0001,           # For 5-digit broker (4-digit = 0.01)
 
     # ===== MARTINGALE SETTINGS =====
-    'consecutive_losses_trigger': 1,  # Switch to REAL mode after N losses
+    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N losses
     'martingale_multiplier': 1.3,     # Lot x 1.3 after each loss
     'max_lot_size': 10.0,             # Maximum lot size limit
 
@@ -228,7 +227,7 @@ BACKTEST_CONFIG = {
     'atr_tp_multiplier': 3.0,      # TP = ATR x 3.0
 
     # ===== CONFLUENCE SCORING =====
-    'min_confidence_score': 70.0,  # Minimum score to trade (70%)
+    'min_confidence_score': 80.0,  # Minimum score to trade (70%)
     'enable_adx_filter': True,     # Enable ADX filter for trending markets
     'adx_threshold': 25.0,         # ADX >= 25 for trending
 
