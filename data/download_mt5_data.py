@@ -257,6 +257,9 @@ class MT5DataDownloader:
 
             if output_path is None:
                 output_path = get_data_filepath(symbol, timeframe_name, days)
+            else:
+                # Convert to Path object if string
+                output_path = Path(output_path)
 
             # Create directory
             output_path.parent.mkdir(parents=True, exist_ok=True)
