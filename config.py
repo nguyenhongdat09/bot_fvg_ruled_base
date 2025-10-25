@@ -208,16 +208,16 @@ BACKTEST_CONFIG = {
     'days': 180,                   # So ngay data
 
     # ===== ACCOUNT SETTINGS =====
-    'initial_balance': 1000.0,     # Starting balance ($1000 minimum recommended)
+    'initial_balance': 200.0,     # Starting balance ($1000 minimum recommended)
     'risk_per_trade': 0.02,        # Risk per trade (2% = 0.02)
-    'base_lot_size': 0.1,          # Base lot size in virtual mode
+    'base_lot_size': 0.01,          # Base lot size in virtual mode
 
     # ===== COMMISSION & COSTS =====
-    'commission_per_lot': 7.0,     # Commission per lot (round trip) - DIEU CHINH THEO BROKER!
+    'commission_per_lot': 0.0,     # Commission per lot (round trip) - DIEU CHINH THEO BROKER!
     'pip_value': 0.0001,           # For 5-digit broker (4-digit = 0.01)
 
     # ===== MARTINGALE SETTINGS =====
-    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N losses
+    'consecutive_losses_trigger': 1,  # Switch to REAL mode after N losses
     'martingale_multiplier': 1.3,     # Lot x 1.3 after each loss
     'max_lot_size': 10.0,             # Maximum lot size limit
 
@@ -240,7 +240,7 @@ BACKTEST_CONFIG = {
 
     # ===== BACKTEST LIMITS =====
     'max_trades_per_day': 50,      # Max trades per day (unlimited = None)
-    'max_concurrent_trades': 1,    # Only 1 trade at a time
+    'max_concurrent_trades': 3,    # Only 1 trade at a time
 }
 
 # ============================================
