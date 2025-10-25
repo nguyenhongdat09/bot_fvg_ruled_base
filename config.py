@@ -187,12 +187,12 @@ STRATEGY_CONFIG = {
 
     # Stop Loss / Take Profit (in pips)
     'sl_pips': 20,
-    'tp_pips': 30,
+    'tp_pips': 40,
 
     # Or use ATR-based SL/TP
     'use_atr_sl_tp': False,
     'sl_atr_multiplier': 1.5,
-    'tp_atr_multiplier': 3.0,
+    'tp_atr_multiplier': 2.0,
 }
 
 # ============================================
@@ -227,9 +227,9 @@ BACKTEST_CONFIG = {
     'atr_tp_multiplier': 3.0,      # TP = ATR x 3.0
 
     # ===== CONFLUENCE SCORING =====
-    'min_confidence_score': 80.0,  # Minimum score to trade (70%)
+    'min_confidence_score': 80.0,  # Minimum score to trade (80%)
     'enable_adx_filter': True,     # Enable ADX filter for trending markets
-    'adx_threshold': 25.0,         # ADX >= 25 for trending
+    'adx_threshold': 35.0,         # ADX >= 35 for trending
 
     # ===== CONFLUENCE WEIGHTS (Tong = 100) =====
     'confluence_weights': {
@@ -250,7 +250,7 @@ BACKTEST_CONFIG = {
 BACKTEST_CONFIG_OPTIMIZED = {
     # ===== SYMBOL & TIMEFRAME =====
     'symbol': 'GBPUSD',
-    'timeframe': 'M15',
+    'timeframe': 'H1',
     'fvg_timeframe': 'H1',
     'days': 180,
 
@@ -264,7 +264,7 @@ BACKTEST_CONFIG_OPTIMIZED = {
     'pip_value': 0.0001,
 
     # ===== MARTINGALE SETTINGS (Safer) =====
-    'consecutive_losses_trigger': 5,   # Changed from 3 -> 5 (more conservative)
+    'consecutive_losses_trigger': 3,   # Changed from 3 -> 5 (more conservative)
     'martingale_multiplier': 1.2,      # Changed from 1.3 -> 1.2 (slower escalation)
     'max_lot_size': 5.0,               # Changed from 10.0 -> 5.0 (safer max)
 
@@ -274,9 +274,9 @@ BACKTEST_CONFIG_OPTIMIZED = {
                                        # Risk:Reward = 1:2
 
     # ===== CONFLUENCE SCORING (More Selective) =====
-    'min_confidence_score': 85.0,      # Changed from 70 -> 85 (much more selective)
+    'min_confidence_score': 70.0,      # Changed from 70 -> 85 (much more selective)
     'enable_adx_filter': True,
-    'adx_threshold': 30.0,             # Changed from 25 -> 30 (stronger trends only)
+    'adx_threshold': 35.0,             # Changed from 25 -> 30 (stronger trends only)
 
     # ===== CONFLUENCE WEIGHTS =====
     'confluence_weights': {
@@ -307,11 +307,11 @@ BACKTEST_CONFIG_AGGRESSIVE = {
     'base_lot_size': 0.1,
 
     # ===== COMMISSION & COSTS =====
-    'commission_per_lot': 7.0,
+    'commission_per_lot': 0.0,
     'pip_value': 0.0001,
 
     # ===== MARTINGALE SETTINGS (Aggressive) =====
-    'consecutive_losses_trigger': 1,   # Switch immediately after 1 loss
+    'consecutive_losses_trigger': 3,   # Switch immediately after 1 loss
     'martingale_multiplier': 1.5,      # High multiplier
     'max_lot_size': 10.0,
 
