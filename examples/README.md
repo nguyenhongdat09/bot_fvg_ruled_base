@@ -222,11 +222,11 @@ Kiểm tra:
 
 ## Next Steps
 
-1. ✅ Cấu hình SL/TP theo pips - DONE
-2. ✅ Toggle Fixed/ATR mode - DONE
-3. 🔄 Tích hợp data thật từ MT5
-4. 🔄 Thêm trailing stop
-5. 🔄 Visualization với charts
+1. [HOÀN THÀNH] Cấu hình SL/TP theo pips
+2. [HOÀN THÀNH] Toggle Fixed/ATR mode
+3. [KẾ HOẠCH] Tích hợp data thật từ MT5
+4. [KẾ HOẠCH] Thêm trailing stop
+5. [KẾ HOẠCH] Visualization với charts
 
 ## Liên hệ
 

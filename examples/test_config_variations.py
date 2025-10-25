@@ -11,7 +11,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import BACKTEST_CONFIG
-from examples.run_backtest import run_backtest, create_sample_data
+from examples.run_backtest import run_backtest
 
 
 def test_fixed_mode_variations():
