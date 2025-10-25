@@ -179,7 +179,8 @@ def _setup_confluence_scorer(self):
         adx_threshold=25.0  # Thay đổi ADX threshold
     )
 ```
-
+# Lưu ý: TỔNG PHẢI = 100
+    # 60 + 15 + 15 + 10 = 100 ✓
 ### 2. Thay Đổi SL/TP Multipliers
 
 File: `core/backtest/backtester.py`

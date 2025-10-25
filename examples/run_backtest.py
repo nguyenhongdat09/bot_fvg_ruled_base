@@ -29,15 +29,15 @@ from config import DATA_DIR
 
 
 def run_backtest(
-    symbol: str = 'EURUSD',
-    timeframe: str = 'M15',
+    symbol: str = 'GBPUSD',
+    timeframe: str = 'M5',#Timeframe cua indicator
     days: int = 180,
-    fvg_timeframe: str = 'H1',
-    initial_balance: float = 10000.0,
-    risk_per_trade: float = 0.02,
-    min_confidence: float = 70.0,
+    fvg_timeframe: str = 'H1', #Timeframe de phan tich FVG
+    initial_balance: float = 200.0,
+    risk_per_trade: float = 0.01,
+    min_confidence: float = 80.0,
     enable_adx: bool = True
-):
+    ):
     """
     Run backtest
 
@@ -89,7 +89,7 @@ def run_backtest(
     config = BacktestConfig(
         initial_balance=initial_balance,
         risk_per_trade=risk_per_trade,
-        base_lot_size=0.1,
+        base_lot_size=0.01,
         consecutive_losses_trigger=3,
         martingale_multiplier=1.3,
         max_lot_size=10.0,

@@ -76,13 +76,9 @@ BATCH_DOWNLOAD_CONFIG = {
     # Symbols to download (list of symbols)
     'symbols': [
         # Major pairs
-        'EURUSD',
+         
         'GBPUSD',
-        'USDJPY',
-        'AUDUSD',
-        'USDCAD',
-        'NZDUSD',
-        'USDCHF',
+         
 
         # Cross pairs (optional - comment out if not needed)
         # 'EURJPY',
@@ -103,9 +99,11 @@ BATCH_DOWNLOAD_CONFIG = {
 
     # Timeframes to download for EACH symbol
     'timeframes': [
-        'M15',
+        'M5',
+        'M15', 
         'H1',
         'H4',
+        'D1',
         # 'M5',   # Uncomment if needed
         # 'M30',  # Uncomment if needed
         # 'D1',   # Uncomment if needed

@@ -43,7 +43,7 @@ class Trade:
     exit_reason: Optional[str] = None  # 'TP', 'SL', 'END'
     pnl: Optional[float] = None
     pnl_pips: Optional[float] = None
-
+ 
     # Signal analysis data
     confluence_score: float = 0.0
     confidence: str = ""
@@ -92,7 +92,7 @@ class Trade:
 @dataclass
 class BacktestConfig:
     """Backtest configuration"""
-    initial_balance: float = 10000.0  # Starting balance
+    initial_balance: float = 200.0  # Starting balance
     risk_per_trade: float = 0.02      # 2% risk per trade
     base_lot_size: float = 0.1        # Base lot size in virtual mode
 
