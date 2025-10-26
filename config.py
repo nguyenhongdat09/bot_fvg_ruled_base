@@ -99,7 +99,7 @@ BATCH_DOWNLOAD_CONFIG = {
 
     # Timeframes to download for EACH symbol
     'timeframes': [
-        'M5',
+        
         'M15', 
         'H1',
         'H4',
@@ -110,7 +110,7 @@ BATCH_DOWNLOAD_CONFIG = {
     ],
 
     # Data range
-    'days': 180,              # Download last 180 days
+    'days': 700,              # Download last 180 days
 
     # Download settings
     'skip_existing': True,    # Skip if file already exists
@@ -205,7 +205,7 @@ BACKTEST_CONFIG = {
     'symbol': 'GBPUSD',
     'timeframe': 'M15',             # Base timeframe
     'fvg_timeframe': 'H1',         # FVG analysis timeframe
-    'days': 730,                   # Number of days of data
+    'days': 700,                   # Number of days of data
 
     # ===== ACCOUNT SETTINGS =====
     'initial_balance': 1000.0,     # Starting balance
