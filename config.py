@@ -205,7 +205,7 @@ BACKTEST_CONFIG = {
     'symbol': 'GBPUSD',
     'timeframe': 'M15',             # Base timeframe
     'fvg_timeframe': 'H1',         # FVG analysis timeframe
-    'days': 180,                   # Number of days of data
+    'days': 730,                   # Number of days of data
 
     # ===== ACCOUNT SETTINGS =====
     'initial_balance': 1000.0,     # Starting balance
@@ -218,7 +218,7 @@ BACKTEST_CONFIG = {
     'pip_value_in_account_currency': 10.0,  # $ per pip per standard lot (GBPUSD = $10)
 
     # ===== DYNAMIC RISK RECOVERY (Replaces Martingale!) =====
-    'consecutive_losses_trigger': 5,  # Switch to REAL mode after N virtual losses
+    'consecutive_losses_trigger': 4,  # Switch to REAL mode after N virtual losses
     'recovery_multiplier': 2.0,       # Recovery target = Total Loss × 2.0 (recover + profit)
     'min_lot_size': 0.01,             # Minimum lot size (broker limit)
     'max_lot_size': 10.0,             # Maximum lot size (risk limit)
