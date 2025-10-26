@@ -93,23 +93,30 @@ class Trade:
 @dataclass
 class BacktestConfig:
     """Backtest configuration"""
-    initial_balance: float = 200.0  # Starting balance
-    initial_balance: float = 200.0  # Starting balance
-    risk_per_trade: float = 0.02      # 2% risk per trade
-    base_lot_size: float = 0.1        # Base lot size in virtual mode
+    initial_balance: float = 1000.0      # Starting balance
+    risk_per_trade: float = 0.02         # 2% risk per trade
+    base_lot_size: float = 0.1           # Base lot size in virtual mode
 
-    # Martingale settings
+    # Dynamic Risk Recovery settings
     consecutive_losses_trigger: int = 3  # Switch to real mode after N losses
-    martingale_multiplier: float = 1.3   # Multiply lot size by 1.3 after loss
+    recovery_multiplier: float = 2.0     # Recovery target = Total Loss × 2.0
+    min_lot_size: float = 0.01           # Minimum lot size (broker limit)
     max_lot_size: float = 10.0           # Maximum lot size limit
 
     # Trading settings
     pip_value: float = 0.0001            # For 5-digit broker
     commission_per_lot: float = 7.0      # Commission per lot (round trip)
 
-    # Stop loss / Take profit
+    # Stop loss / Take profit mode
+    use_atr_sl_tp: bool = False          # True=ATR mode, False=Pips mode
+
+    # ATR mode settings
     atr_sl_multiplier: float = 1.5       # SL = ATR * 1.5
     atr_tp_multiplier: float = 3.0       # TP = ATR * 3.0
+
+    # Pips mode settings
+    sl_pips: float = 50                  # SL in pips (fixed mode)
+    tp_pips: float = 100                 # TP in pips (fixed mode)
 
     # Confluence scoring thresholds
     min_confidence_score: float = 70.0   # Minimum score to trade
@@ -117,16 +124,23 @@ class BacktestConfig:
 
 class Backtester:
     """
-    Backtest engine with virtual/real mode switching
+    Backtest engine with Dynamic Risk Recovery System
 
     Virtual Mode (Default):
     - Trade with base_lot_size
-    - Track performance
+    - Track performance without risking real capital
+    - Accumulate virtual losses
 
-    Real Mode (After 3 consecutive losses):
-    - Start with base_lot_size
-    - After each loss: lot_size * martingale_multiplier
-    - After win: reset to base_lot_size and back to virtual mode
+    Real Mode (After N consecutive virtual losses):
+    - Calculate lot size dynamically to recover all losses + profit
+    - Formula: lot_size = (total_loss × recovery_multiplier) / (tp_pips × pip_value)
+    - Minimum $10 profit guarantee
+    - After win: reset to virtual mode and clear all losses
+    - Lot sizes rounded to 2 decimal places (e.g., 0.013 → 0.01)
+
+    SL/TP Modes:
+    - ATR Mode: Dynamic SL/TP based on market volatility
+    - Pips Mode: Fixed SL/TP in pips
     """
 
     def __init__(self, config: BacktestConfig = None):

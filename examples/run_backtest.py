@@ -84,8 +84,13 @@ def run_backtest():
     print(f"   Risk per Trade: {cfg['risk_per_trade'] * 100}%")
     print(f"   Base Lot Size: {cfg['base_lot_size']}")
     print(f"   Commission: ${cfg['commission_per_lot']}/lot")
-    print(f"   Martingale Trigger: {cfg['consecutive_losses_trigger']} losses")
-    print(f"   Martingale Multiplier: {cfg['martingale_multiplier']}x")
+    print(f"   Loss Trigger (VIRTUAL→REAL): {cfg['consecutive_losses_trigger']} losses")
+    print(f"   Recovery Multiplier: {cfg['recovery_multiplier']}x")
+    print(f"   SL/TP Mode: {'ATR-based' if cfg['use_atr_sl_tp'] else 'Fixed Pips'}")
+    if cfg['use_atr_sl_tp']:
+        print(f"   ATR SL/TP: {cfg['atr_sl_multiplier']}x / {cfg['atr_tp_multiplier']}x")
+    else:
+        print(f"   Fixed SL/TP: {cfg['sl_pips']} / {cfg['tp_pips']} pips")
 
     # 4. Run Backtest
     print("\n[STEP 4] Running Backtest...")
