@@ -104,7 +104,8 @@ class BacktestConfig:
     max_lot_size: float = 10.0           # Maximum lot size limit
 
     # Trading settings
-    pip_value: float = 0.0001            # For 5-digit broker
+    pip_value: float = 0.0001            # For 5-digit broker (price increment)
+    pip_value_in_account_currency: float = 10.0  # $ per pip per standard lot
     commission_per_lot: float = 7.0      # Commission per lot (round trip)
 
     # Stop loss / Take profit mode
@@ -268,14 +269,17 @@ class Backtester:
             required_profit = min_required_profit
 
         # Calculate lot size
-        # Profit = (TP pips × pip_value × lot_size) - commission
-        # Simplified: lot_size = required_profit / (TP pips × pip_value)
-        pip_value_per_lot = tp_distance_pips * self.config['pip_value']
+        # Profit per standard lot = TP pips × pip_value_in_account_currency
+        # Example: 150 pips × $10/pip = $1,500 profit per 1.0 lot
+        # Lot size = required_profit / (TP pips × pip_value_in_account_currency)
 
-        if pip_value_per_lot == 0:
+        pip_value_in_money = self.config.get('pip_value_in_account_currency', 10.0)
+        profit_per_standard_lot = tp_distance_pips * pip_value_in_money
+
+        if profit_per_standard_lot == 0:
             return self.config['base_lot_size']
 
-        raw_lot_size = required_profit / pip_value_per_lot
+        raw_lot_size = required_profit / profit_per_standard_lot
 
         # Round to 2 decimals
         lot_size = self.round_lot_size(raw_lot_size)

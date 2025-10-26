@@ -215,6 +215,7 @@ BACKTEST_CONFIG = {
     # ===== COMMISSION & COSTS =====
     'commission_per_lot': 7.0,     # Commission per lot (round trip)
     'pip_value': 0.0001,           # For 5-digit broker (0.01 for 4-digit)
+    'pip_value_in_account_currency': 10.0,  # $ per pip per standard lot (GBPUSD = $10)
 
     # ===== DYNAMIC RISK RECOVERY (Replaces Martingale!) =====
     'consecutive_losses_trigger': 3,  # Switch to REAL mode after N virtual losses
