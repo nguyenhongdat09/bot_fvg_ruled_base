@@ -245,15 +245,15 @@ BACKTEST_CONFIG = {
     # STATISTICAL MODE (use_statistical=True):
     # Total = 110, then -10 regime = 100
     'confluence_weights': {
-        'fvg': 50,              # Giữ nguyên (linh hồn strategy)
-        'fvg_size_atr': 10,     # Giữ (quality filter)
+        'fvg': 60,              # Giữ nguyên (linh hồn strategy)
+        'fvg_size_atr': 15,     # Giữ (quality filter)
         'hurst': 0,             # ← REMOVE (negative importance)
-        'lr_deviation': 50,     # ← TĂNG LÊN (top importance!)
+        'lr_deviation': 25,     # ← TĂNG LÊN (top importance!)
         'skewness': 0,         # ← GIỮ (ablation: +0.0114)
-        'kurtosis': 20,          # ← REMOVE (ablation: -0.0057)
+        'kurtosis': 0,          # ← REMOVE (ablation: -0.0057)
         'obv_div': 0,           # ← REMOVE (no impact)
         'overlap_count': 0,     # Disabled
-        'regime': -30,            # ← REMOVE (no impact)
+        'regime': 0,            # ← REMOVE (no impact)
         
         # Component scores - Tắt hết, chỉ dùng raw values
         'score_lr_deviation': 0,  # Negative importance
