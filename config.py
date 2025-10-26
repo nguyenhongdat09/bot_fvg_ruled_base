@@ -245,15 +245,23 @@ BACKTEST_CONFIG = {
     # STATISTICAL MODE (use_statistical=True):
     # Total = 110, then -10 regime = 100
     'confluence_weights': {
-        'fvg': 45,              # Primary signal (reduced, quality checked by fvg_size_atr)
-        'fvg_size_atr': 15,     # FVG strength normalized by ATR - CRITICAL!
-        'hurst': 10,            # Hurst Exponent (trend persistence)
-        'lr_deviation': 20,     # Linear regression deviation - CRITICAL!
-        'skewness': 10,         # Distribution bias (filter)
-        'kurtosis': 5,          # Fat tails detection (filter)
-        'obv_div': 5,          # OBV Divergence
-        'overlap_count': 0,     # Multi-TF overlap (disabled by default, can enable for testing)
-        'regime': -10,          # Market Regime penalty (negative!)
+        'fvg': 50,              # Giữ nguyên (linh hồn strategy)
+        'fvg_size_atr': 10,     # Giữ (quality filter)
+        'hurst': 0,             # ← REMOVE (negative importance)
+        'lr_deviation': 50,     # ← TĂNG LÊN (top importance!)
+        'skewness': 0,         # ← GIỮ (ablation: +0.0114)
+        'kurtosis': 20,          # ← REMOVE (ablation: -0.0057)
+        'obv_div': 0,           # ← REMOVE (no impact)
+        'overlap_count': 0,     # Disabled
+        'regime': -30,            # ← REMOVE (no impact)
+        
+        # Component scores - Tắt hết, chỉ dùng raw values
+        'score_lr_deviation': 0,  # Negative importance
+        'score_skewness': 0,      # Negative importance (dùng raw skewness)
+        'score_hurst': 0,
+        'score_kurtosis': 0,
+        'score_obv_div': 0,
+        'score_regime': 0,
     },
     # BASIC MODE (use_statistical=False):
     # 'confluence_weights': {
