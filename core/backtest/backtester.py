@@ -400,6 +400,13 @@ class Backtester:
             'kurtosis': raw_indicators.get('kurtosis', 0),
             'obv_divergence': raw_indicators.get('obv_divergence', 0),
             'atr_percentile': raw_indicators.get('atr_percentile', 0),
+            # Exhaustion indicators
+            'exhaustion_score': raw_indicators.get('exhaustion_score', 0),
+            'exhaustion_direction': raw_indicators.get('exhaustion_direction', 'none'),
+            'cusum_score': raw_indicators.get('cusum_score', 0),
+            'velocity_score': raw_indicators.get('velocity_score', 0),
+            'velocity': raw_indicators.get('velocity', 0),
+            'acceleration': raw_indicators.get('acceleration', 0),
         })
 
         # Add component scores (for feature engineering)

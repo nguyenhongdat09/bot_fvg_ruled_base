@@ -31,6 +31,7 @@ from indicators.volume import VWAPIndicator, OBVIndicator, VolumeAnalyzer
 from indicators.trend import ADXIndicator
 from indicators.confluence import ConfluenceScorer
 from core.indicators.statistical_indicators import StatisticalIndicators
+from core.indicators.exhaustion_indicators import add_exhaustion_indicators
 from config import MULTI_TIMEFRAME_STRATEGY_CONFIG
 
 
@@ -154,6 +155,17 @@ class FVGConfluenceStrategy:
             print("      ✓ Kurtosis (fat tails)")
             print("      ✓ OBV Divergence")
             print("      ✓ ATR Percentile (market regime)")
+
+            # Calculate Exhaustion Indicators (CUSUM + Velocity)
+            print("   Calculating Exhaustion Indicators...")
+            self.data = add_exhaustion_indicators(
+                self.data,
+                cusum_lookback=20,
+                cusum_threshold=3.0,
+                velocity_smooth_window=3
+            )
+            print("      ✓ CUSUM Changepoint Detection (momentum regime changes)")
+            print("      ✓ Price Velocity & Acceleration (physics-based exhaustion)")
         else:
             # ===== BASIC MODE (backward compatible) =====
             print("   Mode: BASIC (Classic)")
@@ -272,6 +284,13 @@ class FVGConfluenceStrategy:
             'kurtosis': current_row.get('kurtosis', np.nan),
             'obv_divergence': current_row.get('OBV_divergence', np.nan),
             'atr_percentile': current_row.get('ATR_percentile', np.nan),
+            # Exhaustion indicators
+            'exhaustion_score': current_row.get('exhaustion_score', np.nan),
+            'exhaustion_direction': current_row.get('exhaustion_direction', 'none'),
+            'cusum_score': current_row.get('cusum_score', np.nan),
+            'velocity_score': current_row.get('velocity_score', np.nan),
+            'velocity': current_row.get('velocity', np.nan),
+            'acceleration': current_row.get('acceleration', np.nan),
         }
 
         return confluence_result
