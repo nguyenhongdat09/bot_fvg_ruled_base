@@ -87,14 +87,17 @@ class ConfluenceScorer:
 
         # Default weights based on mode
         if use_statistical:
-            # Statistical mode weights
+            # Statistical mode weights (Total = 110, then -10 regime = 100)
             self.weights = weights or {
-                'fvg': 50,          # Primary signal (unchanged)
-                'hurst': 20,        # Hurst Exponent (trend persistence)
-                'skewness': 15,     # Distribution bias
-                'kurtosis': 10,     # Fat tails detection
-                'obv_div': 15,      # OBV Divergence
-                'regime': -10,      # Market Regime penalty (negative!)
+                'fvg': 35,              # Primary signal (reduced, quality checked by fvg_size_atr)
+                'fvg_size_atr': 15,     # FVG strength normalized by ATR
+                'hurst': 10,            # Hurst Exponent (trend persistence)
+                'lr_deviation': 20,     # Linear regression deviation (CRITICAL!)
+                'skewness': 10,         # Distribution bias (filter)
+                'kurtosis': 5,          # Fat tails detection (filter)
+                'obv_div': 15,          # OBV Divergence
+                'overlap_count': 0,     # Multi-TF overlap (disabled by default)
+                'regime': -10,          # Market Regime penalty (negative!)
             }
         else:
             # Basic mode weights (backward compatible)
@@ -190,10 +193,20 @@ class ConfluenceScorer:
         # === Score components based on mode ===
         if self.use_statistical:
             # Statistical mode
+            # FVG Size/ATR Score
+            fvg_size_score = self._score_fvg_size_atr_statistical(data, index, fvg_structure, atr_value)
+            result['components']['fvg_size_atr'] = fvg_size_score
+            result['total_score'] += fvg_size_score
+
             # Hurst Exponent Score
             hurst_score = self._score_hurst_statistical(data, index, fvg_structure.get('bias'))
             result['components']['hurst'] = hurst_score
             result['total_score'] += hurst_score
+
+            # Linear Regression Deviation Score
+            lr_dev_score = self._score_lr_deviation_statistical(data, index, fvg_structure.get('bias'))
+            result['components']['lr_deviation'] = lr_dev_score
+            result['total_score'] += lr_dev_score
 
             # Skewness Score
             skew_score = self._score_skewness_statistical(data, index, fvg_structure.get('bias'))
@@ -209,6 +222,12 @@ class ConfluenceScorer:
             obv_div_score = self._score_obv_divergence_statistical(data, index, fvg_structure.get('bias'))
             result['components']['obv_div'] = obv_div_score
             result['total_score'] += obv_div_score
+
+            # Multi-TF Overlap Score (if enabled)
+            if self.weights.get('overlap_count', 0) > 0:
+                overlap_score = self._score_overlap_count_statistical(fvg_structure)
+                result['components']['overlap_count'] = overlap_score
+                result['total_score'] += overlap_score
 
             # Market Regime Filter (PENALTY for bad conditions)
             regime_penalty = self._score_market_regime_statistical(data, index)
@@ -514,6 +533,119 @@ class ConfluenceScorer:
         else:
             # Full penalty (bad regime)
             return self.weights['regime']  # -10
+
+    def _score_fvg_size_atr_statistical(self, data: pd.DataFrame, index: int,
+                                        fvg_structure: Dict, atr_value: Optional[float]) -> float:
+        """
+        Score FVG size normalized by ATR
+
+        Logic:
+        - FVG too small vs ATR = noise (low score)
+        - FVG optimal size (0.5-1.5 ATR) = strong imbalance (high score)
+        - FVG too large (>2 ATR) = might not fill (medium score)
+
+        Args:
+            data: OHLCV DataFrame
+            index: Current index
+            fvg_structure: FVG structure containing gap information
+            atr_value: Current ATR value
+
+        Returns:
+            float: FVG size/ATR score (0-15)
+        """
+        # Need ATR value to normalize
+        if atr_value is None or atr_value == 0:
+            return self.weights['fvg_size_atr'] * 0.5  # Neutral score
+
+        # Extract FVG gap size from structure
+        # The FVG structure should contain gap information
+        fvg_gap = fvg_structure.get('gap_size', None)
+
+        if fvg_gap is None or pd.isna(fvg_gap):
+            # Try to calculate from high/low if available
+            fvg_high = fvg_structure.get('fvg_high', None)
+            fvg_low = fvg_structure.get('fvg_low', None)
+
+            if fvg_high is not None and fvg_low is not None:
+                fvg_gap = abs(fvg_high - fvg_low)
+            else:
+                return self.weights['fvg_size_atr'] * 0.5  # Neutral score
+
+        # Use statistical scoring
+        raw_score = self.stat_scoring.score_fvg_size_atr(fvg_gap, atr_value)
+
+        # Scale to weight
+        return (raw_score / 100) * self.weights['fvg_size_atr']
+
+    def _score_lr_deviation_statistical(self, data: pd.DataFrame, index: int,
+                                        fvg_bias: str) -> float:
+        """
+        Score Linear Regression Deviation
+
+        Logic:
+        - Large deviation + opposite FVG = mean reversion setup (high score)
+        - Small deviation = price near fair value = continuation (medium score)
+
+        Args:
+            data: Data with 'lr_deviation' and 'r2' columns
+            index: Current index
+            fvg_bias: 'BULLISH_BIAS' or 'BEARISH_BIAS'
+
+        Returns:
+            float: LR deviation score (0-20)
+        """
+        if 'lr_deviation' not in data.columns or pd.isna(data.iloc[index]['lr_deviation']):
+            return self.weights['lr_deviation'] * 0.5  # Neutral score
+
+        lr_dev = data.iloc[index]['lr_deviation']
+
+        # Get R² if available
+        r2 = None
+        if 'r2' in data.columns and not pd.isna(data.iloc[index]['r2']):
+            r2 = data.iloc[index]['r2']
+
+        # Use statistical scoring
+        raw_score = self.stat_scoring.score_lr_deviation(lr_dev, fvg_bias, r2)
+
+        # Scale to weight
+        return (raw_score / 100) * self.weights['lr_deviation']
+
+    def _score_overlap_count_statistical(self, fvg_structure: Dict) -> float:
+        """
+        Score multi-timeframe FVG overlap (optional)
+
+        Logic:
+        - Multiple FVGs from different timeframes overlapping = institutional zone
+        - More overlaps = higher confidence
+
+        Args:
+            fvg_structure: FVG structure containing overlap information
+
+        Returns:
+            float: Overlap score (0 if disabled or no overlaps)
+        """
+        # This is optional and disabled by default (weight = 0)
+        if self.weights.get('overlap_count', 0) == 0:
+            return 0
+
+        # Check for overlap information in structure
+        overlap_count = fvg_structure.get('overlap_count', 0)
+
+        if overlap_count == 0:
+            return 0
+
+        # Scoring based on number of overlapping timeframes
+        if overlap_count >= 3:
+            raw_score = 100  # 3+ timeframes = very strong zone
+        elif overlap_count == 2:
+            raw_score = 70   # 2 timeframes = strong zone
+        elif overlap_count == 1:
+            raw_score = 40   # 1 overlap = moderate
+        else:
+            raw_score = 0
+
+        # Scale to weight
+        return (raw_score / 100) * self.weights['overlap_count']
 
     # ==================== END STATISTICAL SCORING METHODS ====================
 

@@ -140,6 +140,7 @@ class FVGConfluenceStrategy:
             self.data = StatisticalIndicators.calculate_all_statistical_indicators(
                 self.data,
                 hurst_lookback=100,
+                lr_lookback=50,      # Linear regression lookback
                 skew_lookback=20,
                 kurt_lookback=20,
                 obv_lookback=14,
@@ -148,6 +149,7 @@ class FVGConfluenceStrategy:
             )
 
             print("      ✓ Hurst Exponent (trend persistence)")
+            print("      ✓ Linear Regression Deviation (mean reversion)")
             print("      ✓ Skewness (distribution bias)")
             print("      ✓ Kurtosis (fat tails)")
             print("      ✓ OBV Divergence")

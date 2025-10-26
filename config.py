@@ -243,13 +243,17 @@ BACKTEST_CONFIG = {
 
     # ===== CONFLUENCE WEIGHTS =====
     # STATISTICAL MODE (use_statistical=True):
+    # Total = 110, then -10 regime = 100
     'confluence_weights': {
-        'fvg': 50,          # FVG weight (primary signal)
-        'hurst': 20,        # Hurst Exponent (trend persistence) - QUANT indicator!
-        'skewness': 15,     # Distribution bias
-        'kurtosis': 10,     # Fat tails detection
-        'obv_div': 15,      # OBV Divergence
-        'regime': -10,      # Market Regime penalty (negative!)
+        'fvg': 35,              # Primary signal (reduced, quality checked by fvg_size_atr)
+        'fvg_size_atr': 15,     # FVG strength normalized by ATR - CRITICAL!
+        'hurst': 10,            # Hurst Exponent (trend persistence)
+        'lr_deviation': 20,     # Linear regression deviation - CRITICAL!
+        'skewness': 10,         # Distribution bias (filter)
+        'kurtosis': 5,          # Fat tails detection (filter)
+        'obv_div': 15,          # OBV Divergence
+        'overlap_count': 0,     # Multi-TF overlap (disabled by default, can enable for testing)
+        'regime': -10,          # Market Regime penalty (negative!)
     },
     # BASIC MODE (use_statistical=False):
     # 'confluence_weights': {

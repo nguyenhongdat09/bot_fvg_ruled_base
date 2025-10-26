@@ -150,6 +150,96 @@ class StatisticalIndicators:
         return regime
 
     @staticmethod
+    def calculate_linear_regression_deviation(
+        data: pd.DataFrame,
+        lookback: int = 20,
+        return_r2: bool = False
+    ) -> pd.Series:
+        """
+        Calculate Linear Regression Deviation (standardized)
+
+        Measures how far price is from the regression line (statistical fair value).
+        Similar to Bollinger Bands but using linear regression instead of SMA.
+
+        For FVG Strategy:
+        - Large deviation + FVG = Price far from fair value → Mean reversion setup
+        - Small deviation = Price near fair value → Continuation setup
+
+        Args:
+            data: DataFrame with 'close' prices
+            lookback: Rolling window for regression
+            return_r2: If True, also return R-squared values
+
+        Returns:
+            Series of standardized deviations (in standard deviations)
+            If return_r2=True, returns tuple (deviations, r2_values)
+
+        Example:
+            LR_dev = 2.5 → Price is 2.5 std above regression line (overbought)
+            LR_dev = -2.0 → Price is 2.0 std below regression line (oversold)
+        """
+        close = data['close'].values
+        deviations = []
+        r2_values = [] if return_r2 else None
+
+        for i in range(len(data)):
+            if i < lookback:
+                deviations.append(np.nan)
+                if return_r2:
+                    r2_values.append(np.nan)
+                continue
+
+            # Get window
+            window = close[i-lookback:i+1]  # Include current candle
+            x = np.arange(len(window))
+            y = window
+
+            # Linear regression
+            try:
+                # Fit line: y = slope * x + intercept
+                coeffs = np.polyfit(x, y, 1)
+                slope, intercept = coeffs
+
+                # Predicted values
+                y_pred = slope * x + intercept
+
+                # Current price deviation from regression line
+                current_price = y[-1]
+                predicted_price = y_pred[-1]
+                deviation_abs = current_price - predicted_price
+
+                # Standardize by std of residuals
+                residuals = y - y_pred
+                std_residuals = np.std(residuals)
+
+                if std_residuals > 0:
+                    deviation_std = deviation_abs / std_residuals
+                else:
+                    deviation_std = 0.0
+
+                deviations.append(deviation_std)
+
+                # Calculate R-squared if requested
+                if return_r2:
+                    ss_res = np.sum(residuals ** 2)
+                    ss_tot = np.sum((y - np.mean(y)) ** 2)
+                    r2 = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
+                    r2_values.append(max(0, min(1, r2)))  # Bound to [0, 1]
+
+            except:
+                deviations.append(0.0)
+                if return_r2:
+                    r2_values.append(0.0)
+
+        result = pd.Series(deviations, index=data.index, name='lr_deviation')
+
+        if return_r2:
+            r2_series = pd.Series(r2_values, index=data.index, name='r2')
+            return result, r2_series
+        else:
+            return result
+
+    @staticmethod
     def calculate_returns_skewness(
         data: pd.DataFrame,
         lookback: int = 20
@@ -318,6 +408,7 @@ class StatisticalIndicators:
     def calculate_all_statistical_indicators(
         data: pd.DataFrame,
         hurst_lookback: int = 100,
+        lr_lookback: int = 50,
         skew_lookback: int = 20,
         kurt_lookback: int = 20,
         obv_lookback: int = 14,
@@ -330,6 +421,7 @@ class StatisticalIndicators:
         Args:
             data: DataFrame with OHLCV data
             hurst_lookback: Window for Hurst Exponent calculation
+            lr_lookback: Window for Linear Regression deviation
             skew_lookback: Window for skewness
             kurt_lookback: Window for kurtosis
             obv_lookback: Window for OBV divergence
@@ -347,6 +439,11 @@ class StatisticalIndicators:
         )
         result['hurst_regime'] = StatisticalIndicators.calculate_hurst_regime(
             result['hurst']
+        )
+
+        # Linear Regression Deviation
+        result['lr_deviation'], result['r2'] = StatisticalIndicators.calculate_linear_regression_deviation(
+            data, lookback=lr_lookback, return_r2=True
         )
 
         # Skewness
@@ -419,6 +516,127 @@ class StatisticalScoring:
         else:  # hurst <= 0.4
             # Strong mean reversion - SKIP FVG!
             score = 0
+
+        return score
+
+    @staticmethod
+    def score_lr_deviation(lr_dev: float, fvg_direction: str, r2: float = None) -> float:
+        """
+        Score Linear Regression Deviation with FVG
+
+        Logic:
+        - Large deviation + FVG in opposite direction = mean reversion setup (HIGH score)
+        - Small deviation = price near fair value = continuation (MEDIUM score)
+
+        Examples:
+        - LR_dev = +2.5σ (price far above line) + FVG Bearish = 100 (perfect short)
+        - LR_dev = -2.0σ (price far below line) + FVG Bullish = 100 (perfect long)
+        - LR_dev = 0.5σ (near line) + FVG = 40 (weak setup)
+
+        Args:
+            lr_dev: Linear regression deviation in standard deviations
+            fvg_direction: 'BULLISH_BIAS' or 'BEARISH_BIAS'
+            r2: Optional R-squared value (trend confidence, 0-1)
+
+        Returns:
+            Score 0-100
+        """
+        if pd.isna(lr_dev):
+            return 50  # Neutral if no data
+
+        abs_dev = abs(lr_dev)
+
+        # Base score from deviation magnitude
+        if abs_dev > 2.5:
+            magnitude_score = 100  # Extreme deviation
+        elif abs_dev > 2.0:
+            magnitude_score = 85
+        elif abs_dev > 1.5:
+            magnitude_score = 70
+        elif abs_dev > 1.0:
+            magnitude_score = 55
+        elif abs_dev > 0.5:
+            magnitude_score = 40
+        else:
+            magnitude_score = 20  # Near fair value
+
+        # Direction alignment bonus (mean reversion logic)
+        # FVG Bearish + price above regression = perfect short
+        # FVG Bullish + price below regression = perfect long
+        if (fvg_direction == 'BEARISH_BIAS' and lr_dev > 0) or \
+           (fvg_direction == 'BULLISH_BIAS' and lr_dev < 0):
+            # Mean reversion setup - perfect alignment
+            alignment_bonus = 1.0
+        elif (fvg_direction == 'BEARISH_BIAS' and lr_dev < 0) or \
+             (fvg_direction == 'BULLISH_BIAS' and lr_dev > 0):
+            # Continuation setup - weaker signal
+            alignment_bonus = 0.6
+        else:
+            # Neutral
+            alignment_bonus = 0.7
+
+        score = magnitude_score * alignment_bonus
+
+        # R-squared bonus (if provided)
+        # High R² = strong trend = more reliable regression line
+        if r2 is not None and not pd.isna(r2):
+            if r2 > 0.8:
+                r2_multiplier = 1.1  # +10% bonus
+            elif r2 > 0.6:
+                r2_multiplier = 1.0  # No change
+            elif r2 > 0.4:
+                r2_multiplier = 0.9  # -10% penalty
+            else:
+                r2_multiplier = 0.8  # -20% penalty (weak trend)
+
+            score *= r2_multiplier
+
+        return min(100, max(0, score))
+
+    @staticmethod
+    def score_fvg_size_atr(fvg_size: float, atr_value: float) -> float:
+        """
+        Score FVG size normalized by ATR
+
+        Logic:
+        - FVG too small vs ATR = noise (low score)
+        - FVG optimal size (0.5-1.5 ATR) = strong imbalance (high score)
+        - FVG too large (>2 ATR) = might not fill (medium score)
+
+        Args:
+            fvg_size: FVG gap size in pips
+            atr_value: Current ATR value in pips
+
+        Returns:
+            Score 0-100
+        """
+        if pd.isna(fvg_size) or pd.isna(atr_value) or atr_value == 0:
+            return 50  # Neutral if no data
+
+        # Normalize FVG size by ATR
+        fvg_strength = fvg_size / atr_value
+
+        # Scoring based on optimal range
+        if 0.5 <= fvg_strength <= 1.5:
+            # Optimal range - perfect imbalance strength
+            # Peak at 1.0 ATR
+            distance_from_1 = abs(fvg_strength - 1.0)
+            score = 100 - (distance_from_1 * 20)  # Max 100 at 1.0, 80 at boundaries
+        elif 0.3 <= fvg_strength < 0.5:
+            # Small but acceptable
+            score = 60
+        elif 1.5 < fvg_strength <= 2.0:
+            # Large but might still fill
+            score = 70
+        elif fvg_strength > 2.0:
+            # Very large - might not fill completely
+            score = 50
+        elif fvg_strength >= 0.2:
+            # Very small - likely noise
+            score = 30
+        else:
+            # Tiny gap - definitely noise
+            score = 10
 
         return score
 
