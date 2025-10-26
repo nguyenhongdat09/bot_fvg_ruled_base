@@ -243,26 +243,26 @@ BACKTEST_CONFIG = {
 
     # ===== CONFLUENCE WEIGHTS =====
     # STATISTICAL MODE (use_statistical=True):
-    # Total = 110, then -10 regime = 100
+    # OPTIMIZED based on Feature Engineering Pipeline (2025-10-26)
+    # Removed: hurst, kurtosis, obv_div, regime (no impact or negative)
+    # Increased: lr_deviation (top importance), fvg (core strategy)
+    # Total = 100
     'confluence_weights': {
-        'fvg': 60,              # Giữ nguyên (linh hồn strategy)
-        'fvg_size_atr': 15,     # Giữ (quality filter)
-        'hurst': 0,             # ← REMOVE (negative importance)
-        'lr_deviation': 25,     # ← TĂNG LÊN (top importance!)
-        'skewness': 0,         # ← GIỮ (ablation: +0.0114)
-        'kurtosis': 0,          # ← REMOVE (ablation: -0.0057)
-        'obv_div': 0,           # ← REMOVE (no impact)
+        'fvg': 50,              # Core strategy (INCREASED from 45%)
+        'fvg_size_atr': 15,     # Quality filter - proven useful
+        'hurst': 0,             # REMOVED (negative importance in permutation)
+        'lr_deviation': 25,     # INCREASED from 20% (top feature: 0.0136 importance)
+        'skewness': 10,         # KEEP (score_skewness: +0.0284 ablation impact)
+        'kurtosis': 0,          # REMOVED (negative ablation: -0.0057)
+        'obv_div': 0,           # REMOVED (zero importance, zero impact)
         'overlap_count': 0,     # Disabled
-        'regime': 0,            # ← REMOVE (no impact)
-        
-        # Component scores - Tắt hết, chỉ dùng raw values
-        'score_lr_deviation': 0,  # Negative importance
-        'score_skewness': 0,      # Negative importance (dùng raw skewness)
-        'score_hurst': 0,
-        'score_kurtosis': 0,
-        'score_obv_div': 0,
-        'score_regime': 0,
+        'regime': 0,            # REMOVED (zero importance, zero impact)
     },
+    # OLD CONFIG (before optimization):
+    # 'confluence_weights': {
+    #     'fvg': 45, 'fvg_size_atr': 15, 'hurst': 10, 'lr_deviation': 20,
+    #     'skewness': 10, 'kurtosis': 5, 'obv_div': 5, 'regime': -10
+    # },
     # BASIC MODE (use_statistical=False):
     # 'confluence_weights': {
     #     'fvg': 50,      # FVG weight (primary signal)
