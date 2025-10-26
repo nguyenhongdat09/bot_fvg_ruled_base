@@ -203,28 +203,28 @@ STRATEGY_CONFIG = {
 BACKTEST_CONFIG = {
     # ===== SYMBOL & TIMEFRAME =====
     'symbol': 'GBPUSD',
-    'timeframe': 'H1',             # Base timeframe
+    'timeframe': 'M15',             # Base timeframe
     'fvg_timeframe': 'H1',         # FVG analysis timeframe
     'days': 180,                   # Number of days of data
 
     # ===== ACCOUNT SETTINGS =====
     'initial_balance': 1000.0,     # Starting balance
     'risk_per_trade': 0.02,        # Risk per trade (2%)
-    'base_lot_size': 0.1,          # Base lot size in VIRTUAL mode
+    'base_lot_size': 0.01,          # Base lot size in VIRTUAL mode
 
     # ===== COMMISSION & COSTS =====
-    'commission_per_lot': 7.0,     # Commission per lot (round trip)
+    'commission_per_lot': 0.0,     # Commission per lot (round trip)
     'pip_value': 0.0001,           # For 5-digit broker (0.01 for 4-digit)
 
     # ===== DYNAMIC RISK RECOVERY (Replaces Martingale!) =====
-    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N virtual losses
+    'consecutive_losses_trigger': 5,  # Switch to REAL mode after N virtual losses
     'recovery_multiplier': 2.0,       # Recovery target = Total Loss × 2.0 (recover + profit)
     'min_lot_size': 0.01,             # Minimum lot size (broker limit)
     'max_lot_size': 10.0,             # Maximum lot size (risk limit)
 
     # ===== STOP LOSS / TAKE PROFIT MODE SELECTION =====
     # Choose: True = ATR-based (dynamic), False = Fixed pips
-    'use_atr_sl_tp': False,        # ← Change to True for ATR mode
+    'use_atr_sl_tp': True,        # ← Change to True for ATR mode
 
     # ATR Mode Settings (used when use_atr_sl_tp = True)
     'atr_sl_multiplier': 1.5,      # SL = ATR × 1.5
@@ -241,10 +241,10 @@ BACKTEST_CONFIG = {
 
     # ===== CONFLUENCE WEIGHTS (Total = 100) =====
     'confluence_weights': {
-        'fvg': 50,      # FVG weight (primary signal)
-        'vwap': 20,     # VWAP weight
-        'obv': 15,      # OBV weight
-        'volume': 15,   # Volume spike weight
+        'fvg': 70,      # FVG weight (primary signal)
+        'vwap': 10,     # VWAP weight
+        'obv': 10,      # OBV weight
+        'volume': 10,   # Volume spike weight
     },
 
     # ===== BACKTEST LIMITS =====
