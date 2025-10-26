@@ -30,6 +30,7 @@ from indicators.volatility import ATRIndicator
 from indicators.volume import VWAPIndicator, OBVIndicator, VolumeAnalyzer
 from indicators.trend import ADXIndicator
 from indicators.confluence import ConfluenceScorer
+from core.indicators.statistical_indicators import StatisticalIndicators
 from config import MULTI_TIMEFRAME_STRATEGY_CONFIG
 
 
@@ -61,7 +62,8 @@ class FVGConfluenceStrategy:
         enable_adx_filter: bool = True,
         adx_threshold: float = 25.0,
         min_score_threshold: float = 70.0,
-        confluence_weights: dict = None
+        confluence_weights: dict = None,
+        use_statistical: bool = True
     ):
         """
         Initialize strategy
@@ -74,12 +76,14 @@ class FVGConfluenceStrategy:
             enable_adx_filter: Enable ADX filter
             adx_threshold: ADX threshold for trending market
             min_score_threshold: Minimum confluence score to trade (70%)
-            confluence_weights: Custom confluence weights (default: FVG 50%, VWAP 20%, OBV 15%, Volume 15%)
+            confluence_weights: Custom confluence weights
+            use_statistical: Use statistical indicators (True) or basic indicators (False)
         """
         self.data = data.copy()
         self.base_timeframe = base_timeframe
         self.fvg_timeframe = fvg_timeframe
         self.config = config or MULTI_TIMEFRAME_STRATEGY_CONFIG
+        self.use_statistical = use_statistical
 
         self.enable_adx_filter = enable_adx_filter
         self.adx_threshold = adx_threshold
@@ -122,31 +126,56 @@ class FVGConfluenceStrategy:
         """Calculate indicators"""
         print("\n[INDICATORS] Calculating Indicators...")
 
-        # ATR - for position sizing and SL/TP
+        # ATR - always needed for position sizing and SL/TP
         print("   Calculating ATR...")
         self.atr_indicator = ATRIndicator(period=14)
         self.data['atr'] = self.atr_indicator.calculate(self.data)
 
-        # VWAP - 20% weight
-        print("   Calculating VWAP...")
-        self.vwap_indicator = VWAPIndicator()
-        self.data['vwap'] = self.vwap_indicator.calculate(self.data)
+        if self.use_statistical:
+            # ===== STATISTICAL MODE =====
+            print("   Mode: STATISTICAL (Advanced)")
+            print("   Calculating Statistical Indicators...")
 
-        # OBV - 15% weight
-        print("   Calculating OBV...")
-        self.obv_indicator = OBVIndicator()
-        self.data['obv'] = self.obv_indicator.calculate(self.data)
+            # Calculate all statistical indicators
+            self.data = StatisticalIndicators.calculate_all_statistical_indicators(
+                self.data,
+                poc_lookback=50,
+                skew_lookback=20,
+                kurt_lookback=20,
+                obv_lookback=14,
+                atr_period=14,
+                atr_percentile_lookback=100
+            )
 
-        # Volume Analyzer - 15% weight
-        print("   Calculating Volume Spike...")
-        self.volume_analyzer = VolumeAnalyzer(period=20)
-        volume_data = self.volume_analyzer.calculate(self.data)
-        self.data['avg_volume'] = volume_data['avg_volume']
-        self.data['volume_ratio'] = volume_data['volume_ratio']
-        self.data['is_spike'] = volume_data['is_spike']
-        self.data['spike_strength'] = volume_data['spike_strength']
+            print("      ✓ Volume Profile + POC")
+            print("      ✓ Skewness (distribution bias)")
+            print("      ✓ Kurtosis (fat tails)")
+            print("      ✓ OBV Divergence")
+            print("      ✓ ATR Percentile (market regime)")
+        else:
+            # ===== BASIC MODE (backward compatible) =====
+            print("   Mode: BASIC (Classic)")
 
-        # ADX - optional filter
+            # VWAP - 20% weight
+            print("   Calculating VWAP...")
+            self.vwap_indicator = VWAPIndicator()
+            self.data['vwap'] = self.vwap_indicator.calculate(self.data)
+
+            # OBV - 15% weight
+            print("   Calculating OBV...")
+            self.obv_indicator = OBVIndicator()
+            self.data['obv'] = self.obv_indicator.calculate(self.data)
+
+            # Volume Analyzer - 15% weight
+            print("   Calculating Volume Spike...")
+            self.volume_analyzer = VolumeAnalyzer(period=20)
+            volume_data = self.volume_analyzer.calculate(self.data)
+            self.data['avg_volume'] = volume_data['avg_volume']
+            self.data['volume_ratio'] = volume_data['volume_ratio']
+            self.data['is_spike'] = volume_data['is_spike']
+            self.data['spike_strength'] = volume_data['spike_strength']
+
+        # ADX - optional filter (both modes)
         if self.enable_adx_filter:
             print("   Calculating ADX...")
             self.adx_indicator = ADXIndicator(period=14)
@@ -164,11 +193,21 @@ class FVGConfluenceStrategy:
         """Setup confluence scorer"""
         print("\n[CONFLUENCE] Setting up Confluence Scorer...")
 
-        # Use custom weights if provided, otherwise use defaults
+        # Use custom weights if provided, otherwise use defaults based on mode
         if self.confluence_weights is not None:
             weights = self.confluence_weights
+        elif self.use_statistical:
+            # Statistical mode default weights
+            weights = {
+                'fvg': 50,          # Primary signal (unchanged)
+                'poc': 20,          # Volume Profile POC
+                'skewness': 15,     # Distribution bias
+                'kurtosis': 10,     # Fat tails
+                'obv_div': 15,      # OBV Divergence
+                'regime': -10,      # Market Regime penalty
+            }
         else:
-            # Default weights: FVG 50%, VWAP 20%, OBV 15%, Volume 15%
+            # Basic mode default weights
             weights = {
                 'fvg': 50,
                 'vwap': 20,
@@ -179,9 +218,11 @@ class FVGConfluenceStrategy:
         self.confluence_scorer = ConfluenceScorer(
             weights=weights,
             adx_enabled=self.enable_adx_filter,
-            adx_threshold=self.adx_threshold
+            adx_threshold=self.adx_threshold,
+            use_statistical=self.use_statistical
         )
 
+        print(f"   Mode: {'STATISTICAL' if self.use_statistical else 'BASIC'}")
         print(f"   Weights: {weights}")
         print(f"   ADX Filter: {self.enable_adx_filter} (threshold={self.adx_threshold})")
         print("   [OK] Confluence Scorer ready")

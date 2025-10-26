@@ -29,7 +29,7 @@ class TradeMode(Enum):
 
 @dataclass
 class Trade:
-    """Trade record"""
+    """Trade record with full config parameters for AI analysis"""
     entry_time: datetime
     entry_price: float
     direction: str  # 'BUY' or 'SELL'
@@ -43,12 +43,14 @@ class Trade:
     exit_reason: Optional[str] = None  # 'TP', 'SL', 'END'
     pnl: Optional[float] = None
     pnl_pips: Optional[float] = None
- 
- 
+
     # Signal analysis data
     confluence_score: float = 0.0
     confidence: str = ""
     fvg_bias: str = ""
+
+    # Config parameters (for AI analysis & optimization)
+    config_params: dict = field(default_factory=dict)
 
     def close(self, exit_time: datetime, exit_price: float, exit_reason: str, pip_value: float = 0.0001):
         """Close the trade"""
@@ -70,8 +72,8 @@ class Trade:
         return self.pnl > 0 if self.pnl is not None else False
 
     def to_dict(self) -> dict:
-        """Convert to dictionary"""
-        return {
+        """Convert to dictionary with all config parameters"""
+        base_dict = {
             'entry_time': self.entry_time,
             'entry_price': self.entry_price,
             'direction': self.direction,
@@ -88,6 +90,11 @@ class Trade:
             'confidence': self.confidence,
             'fvg_bias': self.fvg_bias,
         }
+
+        # Add config parameters for AI analysis
+        base_dict.update(self.config_params)
+
+        return base_dict
 
 
 @dataclass
@@ -351,6 +358,27 @@ class Backtester:
         # Round lot size to 2 decimals
         lot_size = self.round_lot_size(lot_size)
 
+        # Extract config parameters for CSV logging (AI analysis)
+        confluence_weights = self.config.get('confluence_weights', {})
+        config_params = {
+            'timeframe': self.config.get('timeframe', ''),
+            'fvg_timeframe': self.config.get('fvg_timeframe', ''),
+            'base_lot_size': self.config.get('base_lot_size', 0),
+            'consecutive_losses_trigger': self.config.get('consecutive_losses_trigger', 0),
+            'recovery_multiplier': self.config.get('recovery_multiplier', 0),
+            'use_atr_sl_tp': self.config.get('use_atr_sl_tp', False),
+            'atr_sl_multiplier': self.config.get('atr_sl_multiplier', 0),
+            'atr_tp_multiplier': self.config.get('atr_tp_multiplier', 0),
+            'sl_pips': self.config.get('sl_pips', 0),
+            'tp_pips': self.config.get('tp_pips', 0),
+            'min_confidence_score': self.config.get('min_confidence_score', 0),
+            'adx_threshold': self.config.get('adx_threshold', 0),
+            'weight_fvg': confluence_weights.get('fvg', 0),
+            'weight_vwap': confluence_weights.get('vwap', 0),
+            'weight_obv': confluence_weights.get('obv', 0),
+            'weight_volume': confluence_weights.get('volume', 0),
+        }
+
         # Create trade
         trade = Trade(
             entry_time=timestamp,
@@ -363,6 +391,7 @@ class Backtester:
             confluence_score=signal_data.get('total_score', 0),
             confidence=signal_data.get('confidence', ''),
             fvg_bias=signal_data.get('fvg_structure', {}).get('bias', ''),
+            config_params=config_params,
         )
 
         self.current_trade = trade

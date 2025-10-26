@@ -239,14 +239,25 @@ BACKTEST_CONFIG = {
     'min_confidence_score': 70.0,  # Minimum score to trade (70%)
     'enable_adx_filter': True,     # Enable ADX filter
     'adx_threshold': 35.0,         # ADX >= 35 for strong trends
+    'use_statistical': True,       # Use statistical indicators (True) or basic (False)
 
-    # ===== CONFLUENCE WEIGHTS (Total = 100) =====
+    # ===== CONFLUENCE WEIGHTS =====
+    # STATISTICAL MODE (use_statistical=True):
     'confluence_weights': {
-        'fvg': 70,      # FVG weight (primary signal)
-        'vwap': 10,     # VWAP weight
-        'obv': 10,      # OBV weight
-        'volume': 10,   # Volume spike weight
+        'fvg': 50,          # FVG weight (primary signal)
+        'poc': 20,          # Volume Profile POC (replaces VWAP)
+        'skewness': 15,     # Distribution bias (replaces volume spike)
+        'kurtosis': 10,     # Fat tails detection (new!)
+        'obv_div': 15,      # OBV Divergence (replaces basic OBV)
+        'regime': -10,      # Market Regime penalty (negative!)
     },
+    # BASIC MODE (use_statistical=False):
+    # 'confluence_weights': {
+    #     'fvg': 50,      # FVG weight (primary signal)
+    #     'vwap': 20,     # VWAP weight
+    #     'obv': 15,      # OBV weight
+    #     'volume': 15,   # Volume spike weight
+    # },
 
     # ===== BACKTEST LIMITS =====
     'max_trades_per_day': 50,      # Max trades per day
