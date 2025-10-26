@@ -245,10 +245,10 @@ BACKTEST_CONFIG = {
     # STATISTICAL MODE (use_statistical=True):
     'confluence_weights': {
         'fvg': 50,          # FVG weight (primary signal)
-        'poc': 20,          # Volume Profile POC (replaces VWAP)
-        'skewness': 15,     # Distribution bias (replaces volume spike)
-        'kurtosis': 10,     # Fat tails detection (new!)
-        'obv_div': 15,      # OBV Divergence (replaces basic OBV)
+        'hurst': 20,        # Hurst Exponent (trend persistence) - QUANT indicator!
+        'skewness': 15,     # Distribution bias
+        'kurtosis': 10,     # Fat tails detection
+        'obv_div': 15,      # OBV Divergence
         'regime': -10,      # Market Regime penalty (negative!)
     },
     # BASIC MODE (use_statistical=False):

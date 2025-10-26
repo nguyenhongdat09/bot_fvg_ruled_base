@@ -139,7 +139,7 @@ class FVGConfluenceStrategy:
             # Calculate all statistical indicators
             self.data = StatisticalIndicators.calculate_all_statistical_indicators(
                 self.data,
-                poc_lookback=50,
+                hurst_lookback=100,
                 skew_lookback=20,
                 kurt_lookback=20,
                 obv_lookback=14,
@@ -147,7 +147,7 @@ class FVGConfluenceStrategy:
                 atr_percentile_lookback=100
             )
 
-            print("      ✓ Volume Profile + POC")
+            print("      ✓ Hurst Exponent (trend persistence)")
             print("      ✓ Skewness (distribution bias)")
             print("      ✓ Kurtosis (fat tails)")
             print("      ✓ OBV Divergence")
@@ -200,7 +200,7 @@ class FVGConfluenceStrategy:
             # Statistical mode default weights
             weights = {
                 'fvg': 50,          # Primary signal (unchanged)
-                'poc': 20,          # Volume Profile POC
+                'hurst': 20,        # Hurst Exponent (trend persistence)
                 'skewness': 15,     # Distribution bias
                 'kurtosis': 10,     # Fat tails
                 'obv_div': 15,      # OBV Divergence

@@ -373,7 +373,15 @@ class Backtester:
             'tp_pips': self.config.get('tp_pips', 0),
             'min_confidence_score': self.config.get('min_confidence_score', 0),
             'adx_threshold': self.config.get('adx_threshold', 0),
+            'use_statistical': self.config.get('use_statistical', False),
             'weight_fvg': confluence_weights.get('fvg', 0),
+            # Statistical mode weights
+            'weight_hurst': confluence_weights.get('hurst', 0),
+            'weight_skewness': confluence_weights.get('skewness', 0),
+            'weight_kurtosis': confluence_weights.get('kurtosis', 0),
+            'weight_obv_div': confluence_weights.get('obv_div', 0),
+            'weight_regime': confluence_weights.get('regime', 0),
+            # Basic mode weights
             'weight_vwap': confluence_weights.get('vwap', 0),
             'weight_obv': confluence_weights.get('obv', 0),
             'weight_volume': confluence_weights.get('volume', 0),

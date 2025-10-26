@@ -1,8 +1,8 @@
 """
 Statistical Indicators for Enhanced FVG Strategy
 
-Replaces basic indicators (VWAP, Volume Spike) with advanced statistical measures:
-1. Volume Profile + POC (Point of Control) - Finds highest volume price level
+Advanced statistical measures replacing basic indicators:
+1. Hurst Exponent - Market regime detection (trending vs mean-reverting)
 2. Skewness - Measures distribution bias (bullish/bearish)
 3. Kurtosis - Detects fat tails (extreme moves)
 4. OBV Divergence - Enhanced OBV with divergence detection
@@ -22,88 +22,132 @@ class StatisticalIndicators:
     """Advanced statistical indicators for market analysis"""
 
     @staticmethod
-    def calculate_volume_profile_poc(
+    def calculate_hurst_exponent(
         data: pd.DataFrame,
-        lookback: int = 50,
-        price_bins: int = 20
+        lookback: int = 100,
+        min_lags: int = 2,
+        max_lags: int = 20
     ) -> pd.Series:
         """
-        Calculate Point of Control (POC) from Volume Profile
+        Calculate Hurst Exponent using Rescaled Range (R/S) Analysis
 
-        POC = Price level with highest volume concentration
-        Better than VWAP because it shows where most trading happened,
-        not average price
+        Hurst Exponent measures long-term memory and trend persistence:
+        - H < 0.5: Mean reverting (anti-persistent) - prices tend to reverse
+        - H = 0.5: Random walk (no memory) - Brownian motion
+        - H > 0.5: Trending (persistent) - momentum continues
+
+        For FVG Strategy:
+        - FVG + H > 0.6 = Strong trend confirmation → HIGH confidence
+        - FVG + H < 0.4 = Mean reversion → SKIP (likely fake breakout)
+        - FVG + 0.4 ≤ H ≤ 0.6 = Neutral
 
         Args:
-            data: DataFrame with 'close', 'high', 'low', 'volume'
-            lookback: Number of candles to look back
-            price_bins: Number of price bins for profile
+            data: DataFrame with 'close' prices
+            lookback: Rolling window size for calculation
+            min_lags: Minimum lag for R/S analysis
+            max_lags: Maximum lag for R/S analysis
 
         Returns:
-            Series of POC prices
+            Series of Hurst Exponent values (0-1)
+
+        Reference:
+            Hurst, H. E. (1951). "Long-term storage capacity of reservoirs"
+            Peters, E. E. (1994). "Fractal Market Analysis"
         """
-        poc_values = []
+        close = data['close'].values
+        hurst_values = []
 
         for i in range(len(data)):
             if i < lookback:
-                poc_values.append(np.nan)
+                hurst_values.append(np.nan)
                 continue
 
-            # Get lookback window
-            window = data.iloc[i-lookback:i]
+            # Get window of returns
+            window = close[i-lookback:i]
+            returns = np.diff(np.log(window))
 
-            # Find price range
-            price_min = window['low'].min()
-            price_max = window['high'].max()
+            if len(returns) < max_lags:
+                hurst_values.append(np.nan)
+                continue
 
-            # Create price bins
-            bins = np.linspace(price_min, price_max, price_bins + 1)
+            # Calculate R/S statistics for different lags
+            lags = range(min_lags, min(max_lags, len(returns) // 2))
+            rs_values = []
 
-            # Allocate volume to bins based on candle range
-            volume_profile = np.zeros(price_bins)
+            for lag in lags:
+                # Split returns into chunks of size 'lag'
+                n_chunks = len(returns) // lag
 
-            for _, candle in window.iterrows():
-                # Find which bins this candle covers
-                candle_low = candle['low']
-                candle_high = candle['high']
-                candle_volume = candle['volume']
+                if n_chunks == 0:
+                    continue
 
-                # Distribute volume to bins proportionally
-                for j in range(price_bins):
-                    bin_low = bins[j]
-                    bin_high = bins[j + 1]
+                rs_chunk = []
+                for j in range(n_chunks):
+                    chunk = returns[j*lag:(j+1)*lag]
 
-                    # Calculate overlap between candle and bin
-                    overlap_low = max(bin_low, candle_low)
-                    overlap_high = min(bin_high, candle_high)
+                    if len(chunk) < 2:
+                        continue
 
-                    if overlap_high > overlap_low:
-                        # Proportional volume allocation
-                        overlap_ratio = (overlap_high - overlap_low) / (candle_high - candle_low + 1e-10)
-                        volume_profile[j] += candle_volume * overlap_ratio
+                    # Mean of chunk
+                    mean_chunk = np.mean(chunk)
 
-            # POC = midpoint of bin with highest volume
-            poc_bin_idx = np.argmax(volume_profile)
-            poc_price = (bins[poc_bin_idx] + bins[poc_bin_idx + 1]) / 2
+                    # Mean-adjusted series
+                    adjusted = chunk - mean_chunk
 
-            poc_values.append(poc_price)
+                    # Cumulative sum of adjusted series
+                    cumsum = np.cumsum(adjusted)
 
-        return pd.Series(poc_values, index=data.index, name='POC')
+                    # Range
+                    R = np.max(cumsum) - np.min(cumsum)
+
+                    # Standard deviation
+                    S = np.std(chunk, ddof=1)
+
+                    if S > 0:
+                        rs_chunk.append(R / S)
+
+                if len(rs_chunk) > 0:
+                    rs_values.append(np.mean(rs_chunk))
+
+            if len(rs_values) < 2:
+                hurst_values.append(0.5)  # Default to random walk
+                continue
+
+            # Hurst exponent is slope of log(R/S) vs log(lag)
+            try:
+                log_lags = np.log([lags[i] for i in range(len(rs_values))])
+                log_rs = np.log(rs_values)
+
+                # Linear regression
+                slope, _ = np.polyfit(log_lags, log_rs, 1)
+
+                # Bound to [0, 1]
+                hurst = max(0.0, min(1.0, slope))
+
+                hurst_values.append(hurst)
+            except:
+                hurst_values.append(0.5)  # Default to random walk on error
+
+        return pd.Series(hurst_values, index=data.index, name='hurst')
 
     @staticmethod
-    def calculate_poc_distance(
-        data: pd.DataFrame,
-        poc: pd.Series
-    ) -> pd.Series:
+    def calculate_hurst_regime(hurst: pd.Series) -> pd.Series:
         """
-        Calculate distance from current price to POC
+        Classify market regime based on Hurst Exponent
+
+        Args:
+            hurst: Series of Hurst Exponent values
 
         Returns:
-            Distance in pips (positive = above POC, negative = below POC)
+            Series with regime classification
+            1 = Trending (H > 0.55)
+            0 = Random (0.45 ≤ H ≤ 0.55)
+            -1 = Mean Reverting (H < 0.45)
         """
-        pip_value = 0.0001
-        distance = (data['close'] - poc) / pip_value
-        return distance
+        regime = pd.Series(0, index=hurst.index)
+        regime[hurst > 0.55] = 1   # Trending
+        regime[hurst < 0.45] = -1  # Mean reverting
+        return regime
 
     @staticmethod
     def calculate_returns_skewness(
@@ -273,7 +317,7 @@ class StatisticalIndicators:
     @staticmethod
     def calculate_all_statistical_indicators(
         data: pd.DataFrame,
-        poc_lookback: int = 50,
+        hurst_lookback: int = 100,
         skew_lookback: int = 20,
         kurt_lookback: int = 20,
         obv_lookback: int = 14,
@@ -285,18 +329,24 @@ class StatisticalIndicators:
 
         Args:
             data: DataFrame with OHLCV data
+            hurst_lookback: Window for Hurst Exponent calculation
+            skew_lookback: Window for skewness
+            kurt_lookback: Window for kurtosis
+            obv_lookback: Window for OBV divergence
+            atr_period: ATR period
+            atr_percentile_lookback: Window for ATR percentile
 
         Returns:
             DataFrame with all indicators added
         """
         result = data.copy()
 
-        # Volume Profile + POC
-        result['POC'] = StatisticalIndicators.calculate_volume_profile_poc(
-            data, lookback=poc_lookback
+        # Hurst Exponent (Market Regime Detection)
+        result['hurst'] = StatisticalIndicators.calculate_hurst_exponent(
+            data, lookback=hurst_lookback
         )
-        result['POC_distance'] = StatisticalIndicators.calculate_poc_distance(
-            data, result['POC']
+        result['hurst_regime'] = StatisticalIndicators.calculate_hurst_regime(
+            result['hurst']
         )
 
         # Skewness
@@ -327,45 +377,50 @@ class StatisticalScoring:
     """Scoring logic for statistical indicators in confluence system"""
 
     @staticmethod
-    def score_poc_alignment(poc_distance: float, fvg_direction: str) -> float:
+    def score_hurst(hurst: float, fvg_direction: str) -> float:
         """
-        Score POC alignment with FVG
+        Score Hurst Exponent alignment with FVG
 
         Logic:
-        - Bullish FVG near POC support = high score
-        - Bearish FVG near POC resistance = high score
-        - Far from POC = lower score
+        FVG = price imbalance from TRENDING move
+        Hurst > 0.5 = trending market → FVG more reliable
+        Hurst < 0.5 = mean reverting → FVG likely false signal
+
+        Scoring:
+        - H > 0.6 + FVG = 100 (strong trending, perfect for FVG)
+        - 0.55 < H ≤ 0.6 = 70 (moderate trending)
+        - 0.45 ≤ H ≤ 0.55 = 40 (random walk, neutral)
+        - 0.4 < H < 0.45 = 20 (weak mean reversion)
+        - H ≤ 0.4 = 0 (strong mean reversion, SKIP FVG!)
 
         Args:
-            poc_distance: Distance to POC in pips (+ above, - below)
+            hurst: Hurst Exponent value (0-1)
             fvg_direction: 'BULLISH_BIAS' or 'BEARISH_BIAS'
 
         Returns:
             Score 0-100
         """
-        abs_distance = abs(poc_distance)
+        if pd.isna(hurst):
+            return 50  # Neutral if no data
 
-        # Close to POC = higher score
-        if abs_distance < 10:  # Within 10 pips
-            proximity_score = 100
-        elif abs_distance < 30:  # 10-30 pips
-            proximity_score = 70
-        elif abs_distance < 50:  # 30-50 pips
-            proximity_score = 40
-        else:  # > 50 pips
-            proximity_score = 20
+        # Main scoring based on Hurst value
+        if hurst > 0.6:
+            # Strong trending - PERFECT for FVG
+            score = 100
+        elif hurst > 0.55:
+            # Moderate trending - good for FVG
+            score = 70
+        elif hurst >= 0.45:
+            # Random walk - neutral
+            score = 40
+        elif hurst > 0.4:
+            # Weak mean reversion - risky
+            score = 20
+        else:  # hurst <= 0.4
+            # Strong mean reversion - SKIP FVG!
+            score = 0
 
-        # Direction alignment bonus
-        if fvg_direction == 'BULLISH_BIAS' and poc_distance < 0:
-            # Price below POC, expecting bounce up
-            direction_bonus = 20
-        elif fvg_direction == 'BEARISH_BIAS' and poc_distance > 0:
-            # Price above POC, expecting rejection down
-            direction_bonus = 20
-        else:
-            direction_bonus = 0
-
-        return min(100, proximity_score + direction_bonus)
+        return score
 
     @staticmethod
     def score_skewness(skewness: float, fvg_direction: str) -> float:

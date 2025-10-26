@@ -90,11 +90,11 @@ class ConfluenceScorer:
             # Statistical mode weights
             self.weights = weights or {
                 'fvg': 50,          # Primary signal (unchanged)
-                'poc': 20,          # Volume Profile POC (replaces VWAP)
-                'skewness': 15,     # Distribution bias (replaces volume spike)
-                'kurtosis': 10,     # Fat tails detection (new)
-                'obv_div': 15,      # OBV Divergence (replaces basic OBV)
-                'regime': -10,      # Market Regime penalty (negative weight!)
+                'hurst': 20,        # Hurst Exponent (trend persistence)
+                'skewness': 15,     # Distribution bias
+                'kurtosis': 10,     # Fat tails detection
+                'obv_div': 15,      # OBV Divergence
+                'regime': -10,      # Market Regime penalty (negative!)
             }
         else:
             # Basic mode weights (backward compatible)
@@ -190,10 +190,10 @@ class ConfluenceScorer:
         # === Score components based on mode ===
         if self.use_statistical:
             # Statistical mode
-            # POC Score
-            poc_score = self._score_poc_statistical(data, index, fvg_signal, fvg_structure.get('bias'))
-            result['components']['poc'] = poc_score
-            result['total_score'] += poc_score
+            # Hurst Exponent Score
+            hurst_score = self._score_hurst_statistical(data, index, fvg_structure.get('bias'))
+            result['components']['hurst'] = hurst_score
+            result['total_score'] += hurst_score
 
             # Skewness Score
             skew_score = self._score_skewness_statistical(data, index, fvg_structure.get('bias'))
@@ -386,30 +386,28 @@ class ConfluenceScorer:
 
     # ==================== STATISTICAL SCORING METHODS ====================
 
-    def _score_poc_statistical(self, data: pd.DataFrame, index: int,
-                               signal: str, fvg_bias: str) -> float:
+    def _score_hurst_statistical(self, data: pd.DataFrame, index: int, fvg_bias: str) -> float:
         """
-        Score Volume Profile POC alignment
+        Score Hurst Exponent (trend persistence)
 
         Args:
-            data: Data with 'POC' and 'POC_distance' columns
+            data: Data with 'hurst' column
             index: Current index
-            signal: 'BUY' or 'SELL'
             fvg_bias: 'BULLISH_BIAS' or 'BEARISH_BIAS'
 
         Returns:
-            float: POC score (0-20)
+            float: Hurst score (0-20)
         """
-        if 'POC_distance' not in data.columns or pd.isna(data.iloc[index]['POC_distance']):
+        if 'hurst' not in data.columns or pd.isna(data.iloc[index]['hurst']):
             return 0
 
-        poc_distance = data.iloc[index]['POC_distance']
+        hurst = data.iloc[index]['hurst']
 
         # Use statistical scoring
-        raw_score = self.stat_scoring.score_poc_alignment(poc_distance, fvg_bias)
+        raw_score = self.stat_scoring.score_hurst(hurst, fvg_bias)
 
         # Scale to weight
-        return (raw_score / 100) * self.weights['poc']
+        return (raw_score / 100) * self.weights['hurst']
 
     def _score_skewness_statistical(self, data: pd.DataFrame, index: int,
                                     fvg_bias: str) -> float:
