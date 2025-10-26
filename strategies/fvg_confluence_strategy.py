@@ -262,6 +262,18 @@ class FVGConfluenceStrategy:
         confluence_result['atr'] = atr_value
         confluence_result['fvg_structure'] = fvg_structure  # Add FVG structure for backtest logging
 
+        # Add raw indicator values for CSV export (feature engineering)
+        current_row = self.data.iloc[index]
+        confluence_result['raw_indicators'] = {
+            'hurst': current_row.get('hurst', np.nan),
+            'lr_deviation': current_row.get('lr_deviation', np.nan),
+            'r2': current_row.get('r2', np.nan),
+            'skewness': current_row.get('skewness', np.nan),
+            'kurtosis': current_row.get('kurtosis', np.nan),
+            'obv_divergence': current_row.get('OBV_divergence', np.nan),
+            'atr_percentile': current_row.get('ATR_percentile', np.nan),
+        }
+
         return confluence_result
 
     def should_trade(self, analysis: Dict) -> bool:

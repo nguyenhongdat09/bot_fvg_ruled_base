@@ -376,16 +376,49 @@ class Backtester:
             'use_statistical': self.config.get('use_statistical', False),
             'weight_fvg': confluence_weights.get('fvg', 0),
             # Statistical mode weights
+            'weight_fvg_size_atr': confluence_weights.get('fvg_size_atr', 0),
             'weight_hurst': confluence_weights.get('hurst', 0),
+            'weight_lr_deviation': confluence_weights.get('lr_deviation', 0),
             'weight_skewness': confluence_weights.get('skewness', 0),
             'weight_kurtosis': confluence_weights.get('kurtosis', 0),
             'weight_obv_div': confluence_weights.get('obv_div', 0),
+            'weight_overlap_count': confluence_weights.get('overlap_count', 0),
             'weight_regime': confluence_weights.get('regime', 0),
             # Basic mode weights
             'weight_vwap': confluence_weights.get('vwap', 0),
             'weight_obv': confluence_weights.get('obv', 0),
             'weight_volume': confluence_weights.get('volume', 0),
         }
+
+        # Add raw indicator values (for feature engineering)
+        raw_indicators = signal_data.get('raw_indicators', {})
+        config_params.update({
+            'hurst': raw_indicators.get('hurst', 0),
+            'lr_deviation': raw_indicators.get('lr_deviation', 0),
+            'r2': raw_indicators.get('r2', 0),
+            'skewness': raw_indicators.get('skewness', 0),
+            'kurtosis': raw_indicators.get('kurtosis', 0),
+            'obv_divergence': raw_indicators.get('obv_divergence', 0),
+            'atr_percentile': raw_indicators.get('atr_percentile', 0),
+        })
+
+        # Add component scores (for feature engineering)
+        components = signal_data.get('components', {})
+        config_params.update({
+            'score_fvg': components.get('fvg', 0),
+            'score_fvg_size_atr': components.get('fvg_size_atr', 0),
+            'score_hurst': components.get('hurst', 0),
+            'score_lr_deviation': components.get('lr_deviation', 0),
+            'score_skewness': components.get('skewness', 0),
+            'score_kurtosis': components.get('kurtosis', 0),
+            'score_obv_div': components.get('obv_div', 0),
+            'score_overlap_count': components.get('overlap_count', 0),
+            'score_regime': components.get('regime', 0),
+            # Basic mode component scores
+            'score_vwap': components.get('vwap', 0),
+            'score_obv': components.get('obv', 0),
+            'score_volume': components.get('volume', 0),
+        })
 
         # Create trade
         trade = Trade(
