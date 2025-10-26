@@ -389,31 +389,52 @@ class FeatureOptimizationPipeline:
         print(f"\n[STEP 7] SHAP Values Analysis")
         print("-" * 80)
 
-        # Use model from permutation importance
-        model = self.results['permutation_importance']['model']
+        try:
+            # Use model from permutation importance
+            model = self.results['permutation_importance']['model']
 
-        # Calculate SHAP values
-        split_idx = int(len(self.X) * 0.8)
-        X_test = self.X.iloc[split_idx:]
+            # Calculate SHAP values
+            split_idx = int(len(self.X) * 0.8)
+            X_test = self.X.iloc[split_idx:]
 
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X_test)
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(X_test)
 
-        # Mean absolute SHAP values
-        shap_importance = pd.DataFrame({
-            'Feature': self.X.columns,
-            'SHAP_importance': np.abs(shap_values).mean(axis=0)
-        }).sort_values('SHAP_importance', ascending=False)
+            # Mean absolute SHAP values
+            shap_importance = pd.DataFrame({
+                'Feature': self.X.columns,
+                'SHAP_importance': np.abs(shap_values).mean(axis=0)
+            }).sort_values('SHAP_importance', ascending=False)
 
-        print("✓ SHAP Importance Ranking:")
-        print(shap_importance.to_string(index=False))
+            print("✓ SHAP Importance Ranking:")
+            print(shap_importance.to_string(index=False))
 
-        self.results['shap'] = {
-            'shap_importance': shap_importance,
-            'shap_values': shap_values
-        }
+            self.results['shap'] = {
+                'shap_importance': shap_importance,
+                'shap_values': shap_values
+            }
 
-        return shap_importance
+            return shap_importance
+
+        except Exception as e:
+            print(f"⚠️  SHAP analysis failed (XGBoost compatibility issue): {e}")
+            print("⚠️  Skipping SHAP analysis - using Permutation + Ablation only")
+            print("⚠️  To fix: pip install xgboost==1.7.6 shap==0.42.1")
+
+            # Create dummy SHAP results (use permutation importance as fallback)
+            perm_importance = self.results['permutation_importance']['importance_df']
+            shap_importance = pd.DataFrame({
+                'Feature': perm_importance['Feature'],
+                'SHAP_importance': perm_importance['Importance']  # Fallback to permutation
+            }).sort_values('SHAP_importance', ascending=False)
+
+            self.results['shap'] = {
+                'shap_importance': shap_importance,
+                'shap_values': None,
+                'failed': True
+            }
+
+            return shap_importance
 
     def generate_final_ranking(self):
         """
