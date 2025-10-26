@@ -243,18 +243,26 @@ BACKTEST_CONFIG = {
 
     # ===== CONFLUENCE WEIGHTS =====
     # STATISTICAL MODE (use_statistical=True):
-    # Total = 110, then -10 regime = 100
+    # OPTIMIZED based on Feature Engineering Pipeline (2025-10-26)
+    # Removed: hurst, kurtosis, obv_div, regime (no impact or negative)
+    # Increased: lr_deviation (top importance), fvg (core strategy)
+    # Total = 100
     'confluence_weights': {
-        'fvg': 45,              # Primary signal (reduced, quality checked by fvg_size_atr)
-        'fvg_size_atr': 15,     # FVG strength normalized by ATR - CRITICAL!
-        'hurst': 10,            # Hurst Exponent (trend persistence)
-        'lr_deviation': 20,     # Linear regression deviation - CRITICAL!
-        'skewness': 10,         # Distribution bias (filter)
-        'kurtosis': 5,          # Fat tails detection (filter)
-        'obv_div': 5,          # OBV Divergence
-        'overlap_count': 0,     # Multi-TF overlap (disabled by default, can enable for testing)
-        'regime': -10,          # Market Regime penalty (negative!)
+        'fvg': 50,              # Core strategy (INCREASED from 45%)
+        'fvg_size_atr': 15,     # Quality filter - proven useful
+        'hurst': 0,             # REMOVED (negative importance in permutation)
+        'lr_deviation': 25,     # INCREASED from 20% (top feature: 0.0136 importance)
+        'skewness': 10,         # KEEP (score_skewness: +0.0284 ablation impact)
+        'kurtosis': 0,          # REMOVED (negative ablation: -0.0057)
+        'obv_div': 0,           # REMOVED (zero importance, zero impact)
+        'overlap_count': 0,     # Disabled
+        'regime': 0,            # REMOVED (zero importance, zero impact)
     },
+    # OLD CONFIG (before optimization):
+    # 'confluence_weights': {
+    #     'fvg': 45, 'fvg_size_atr': 15, 'hurst': 10, 'lr_deviation': 20,
+    #     'skewness': 10, 'kurtosis': 5, 'obv_div': 5, 'regime': -10
+    # },
     # BASIC MODE (use_statistical=False):
     # 'confluence_weights': {
     #     'fvg': 50,      # FVG weight (primary signal)
