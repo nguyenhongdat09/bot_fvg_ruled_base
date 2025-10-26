@@ -223,6 +223,16 @@ BACKTEST_CONFIG = {
     'min_lot_size': 0.01,             # Minimum lot size (broker limit)
     'max_lot_size': 10.0,             # Maximum lot size (risk limit)
 
+    # ===== ADAPTIVE RISK MANAGEMENT (Losing Streak Protection) =====
+    # Automatically reduce risk during losing streaks to limit drawdown
+    'enable_adaptive_risk': True,     # Enable/disable adaptive risk (recommended: True)
+    'max_acceptable_streak': 7,       # Hard stop after N consecutive losses (default: 7)
+    # Risk schedule:
+    # Streak 0-2: 100% risk (normal trading)
+    # Streak 3-4: 75% risk (reduce 25%)
+    # Streak 5-6: 50% risk (reduce 50%)
+    # Streak 7+: 0% risk (EMERGENCY STOP - skip all trades)
+
     # ===== STOP LOSS / TAKE PROFIT MODE SELECTION =====
     # Choose: True = ATR-based (dynamic), False = Fixed pips
     'use_atr_sl_tp': True,        # ← Change to True for ATR mode

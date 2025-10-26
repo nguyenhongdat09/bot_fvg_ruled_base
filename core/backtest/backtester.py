@@ -19,6 +19,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+from core.risk.adaptive_risk_manager import AdaptiveRiskManager
 
 
 class TradeMode(Enum):
@@ -185,6 +186,17 @@ class Backtester:
         self.total_pnl = 0.0
         self.max_drawdown = 0.0
 
+        # Adaptive Risk Management
+        enable_adaptive_risk = self.config.get('enable_adaptive_risk', True)
+        if enable_adaptive_risk:
+            max_acceptable_streak = self.config.get('max_acceptable_streak', 7)
+            self.risk_manager = AdaptiveRiskManager(
+                max_lookback=15,
+                max_acceptable_streak=max_acceptable_streak
+            )
+        else:
+            self.risk_manager = None
+
     def round_lot_size(self, lot_size: float) -> float:
         """
         Round lot size to 2 decimal places
@@ -340,6 +352,17 @@ class Backtester:
         if not self.should_trade(signal_data):
             return None
 
+        # ========== ADAPTIVE RISK MANAGEMENT ==========
+        # Check if we should skip trade due to losing streak
+        if self.risk_manager is not None:
+            risk_multiplier = self.risk_manager.get_risk_multiplier()
+
+            if risk_multiplier == 0.0:
+                # Emergency stop - skip trade
+                return None
+        else:
+            risk_multiplier = 1.0  # No risk management = full risk
+
         direction = signal_data['signal']
 
         # Calculate SL and TP (supports both ATR and PIPS modes)
@@ -354,6 +377,10 @@ class Backtester:
         else:
             # REAL mode: calculate lot size for recovery
             lot_size = self.calculate_recovery_lot_size(tp_distance_pips)
+
+        # Apply adaptive risk multiplier
+        if self.risk_manager is not None:
+            lot_size = lot_size * risk_multiplier
 
         # Round lot size to 2 decimals
         lot_size = self.round_lot_size(lot_size)
@@ -548,6 +575,10 @@ class Backtester:
             self.winning_trades += 1
             self.consecutive_losses = 0
 
+            # Update adaptive risk manager
+            if self.risk_manager is not None:
+                self.risk_manager.update(is_win=True)
+
             # Reset to virtual mode and clear losses
             self.mode = TradeMode.VIRTUAL
             self.total_virtual_loss = 0.0
@@ -556,6 +587,10 @@ class Backtester:
         else:
             self.losing_trades += 1
             self.consecutive_losses += 1
+
+            # Update adaptive risk manager
+            if self.risk_manager is not None:
+                self.risk_manager.update(is_win=False)
 
             # Track losses by mode
             if trade.mode == TradeMode.VIRTUAL:
