@@ -218,7 +218,7 @@ BACKTEST_CONFIG = {
     'pip_value_in_account_currency': 10.0,  # $ per pip per standard lot (GBPUSD = $10)
 
     # ===== DYNAMIC RISK RECOVERY (Replaces Martingale!) =====
-    'consecutive_losses_trigger': 4,  # Switch to REAL mode after N virtual losses
+    'consecutive_losses_trigger': 3,  # Switch to REAL mode after N virtual losses
     'recovery_multiplier': 2.0,       # Recovery target = Total Loss × 2.0 (recover + profit)
     'min_lot_size': 0.01,             # Minimum lot size (broker limit)
     'max_lot_size': 10.0,             # Maximum lot size (risk limit)
@@ -245,13 +245,13 @@ BACKTEST_CONFIG = {
     # STATISTICAL MODE (use_statistical=True):
     # Total = 110, then -10 regime = 100
     'confluence_weights': {
-        'fvg': 35,              # Primary signal (reduced, quality checked by fvg_size_atr)
+        'fvg': 45,              # Primary signal (reduced, quality checked by fvg_size_atr)
         'fvg_size_atr': 15,     # FVG strength normalized by ATR - CRITICAL!
         'hurst': 10,            # Hurst Exponent (trend persistence)
         'lr_deviation': 20,     # Linear regression deviation - CRITICAL!
         'skewness': 10,         # Distribution bias (filter)
         'kurtosis': 5,          # Fat tails detection (filter)
-        'obv_div': 15,          # OBV Divergence
+        'obv_div': 5,          # OBV Divergence
         'overlap_count': 0,     # Multi-TF overlap (disabled by default, can enable for testing)
         'regime': -10,          # Market Regime penalty (negative!)
     },
