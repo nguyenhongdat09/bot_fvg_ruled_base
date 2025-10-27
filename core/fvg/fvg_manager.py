@@ -121,6 +121,10 @@ class FVGManager:
 
         # Check bullish FVGs
         for fvg in self.active_bullish_fvgs:
+            # Skip FVG vua moi tao tai current_index (khong check touched voi nen tao no)
+            if fvg.created_index == current_index:
+                continue
+
             was_touched = fvg.check_touched(candle_high, candle_low,
                                            current_index, current_timestamp)
             if was_touched:
@@ -128,6 +132,10 @@ class FVGManager:
 
         # Check bearish FVGs
         for fvg in self.active_bearish_fvgs:
+            # Skip FVG vua moi tao tai current_index
+            if fvg.created_index == current_index:
+                continue
+
             was_touched = fvg.check_touched(candle_high, candle_low,
                                            current_index, current_timestamp)
             if was_touched:
